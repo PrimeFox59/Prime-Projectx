@@ -478,20 +478,30 @@ def invoice_pdf(token):
     buf = io.BytesIO()
     pdf = canvas.Canvas(buf, pagesize=A4)
     width, height = A4
-    margin_left = 50
-    margin_right = width - 50
-    y = height - 50
+    margin_left = 45
+    margin_right = width - 45
+    y = height - 40
+    page_num = 1
     
     # GMT+7 timezone
     gmt7 = timezone(timedelta(hours=7))
     current_time = datetime.now(gmt7).strftime('%Y-%m-%d %H:%M WIB')
 
-    def ensure_space(current_y, min_y=80):
+    def draw_page_number():
+        pdf.setFont("Helvetica", 8)
+        pdf.setFillColorRGB(0.5, 0.5, 0.5)
+        pdf.drawRightString(margin_right, 20, f"Page {page_num}")
+        pdf.setFillColorRGB(0, 0, 0)
+
+    def ensure_space(current_y, min_y=100):
+        nonlocal page_num
         if current_y < min_y:
+            draw_page_number()
             pdf.showPage()
+            page_num += 1
             # Redraw header on new page
-            draw_header(height - 50)
-            return height - 120
+            new_y = draw_header(height - 40)
+            return new_y
         return current_y
 
     def draw_header(start_y):
@@ -500,110 +510,153 @@ def invoice_pdf(token):
         if os.path.exists(header_path):
             try:
                 img = ImageReader(header_path)
-                # Draw image with appropriate width (keeping aspect ratio)
+                # Draw image with full width
                 img_width = margin_right - margin_left
-                img_height = 80  # Adjust height as needed
+                img_height = 70
                 pdf.drawImage(img, margin_left, start_y - img_height, width=img_width, height=img_height, preserveAspectRatio=True, mask='auto')
-                return start_y - img_height - 15
-            except Exception as e:
-                # Fallback to text if image fails
+                
+                # Thin line separator
+                pdf.setLineWidth(0.5)
+                pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
+                pdf.line(margin_left, start_y - img_height - 8, margin_right, start_y - img_height - 8)
+                pdf.setStrokeColorRGB(0, 0, 0)
+                
+                return start_y - img_height - 18
+            except Exception:
                 pass
         
-        # Fallback: text-based header if image not found
-        pdf.setFont("Helvetica-Bold", 24)
+        # Fallback: professional text-based header
+        pdf.setFont("Helvetica-Bold", 26)
         pdf.drawString(margin_left, start_y, "Prime Projectx")
+        
         pdf.setFont("Helvetica-Oblique", 9)
-        pdf.setFillColorRGB(0.3, 0.3, 0.3)
+        pdf.setFillColorRGB(0.4, 0.4, 0.4)
         pdf.drawString(margin_left, start_y - 18, "Engineering & System Development Solutions")
         pdf.setFillColorRGB(0, 0, 0)
         
-        # Contact info
-        pdf.setFont("Helvetica", 8)
-        contact_x = margin_right - 180
-        pdf.drawString(contact_x, start_y, f"WhatsApp: {CONTACT_WHATSAPP}")
+        # Contact info - clean layout
+        pdf.setFont("Helvetica", 7.5)
+        pdf.setFillColorRGB(0.3, 0.3, 0.3)
+        contact_x = margin_right - 165
+        pdf.drawString(contact_x, start_y - 2, f"WhatsApp: {CONTACT_WHATSAPP}")
         pdf.drawString(contact_x, start_y - 12, f"Email: {CONTACT_EMAIL}")
-        pdf.drawString(contact_x, start_y - 24, "LinkedIn: linkedin.com/in/galihprime")
-        pdf.drawString(contact_x, start_y - 36, "Fastwork: fastwork.id/user/glh_prima")
+        pdf.drawString(contact_x, start_y - 22, "LinkedIn: linkedin.com/in/galihprime")
+        pdf.drawString(contact_x, start_y - 32, "Fastwork: fastwork.id/user/glh_prima")
+        pdf.setFillColorRGB(0, 0, 0)
         
+        # Elegant separator line
         pdf.setLineWidth(0.5)
-        pdf.setStrokeColorRGB(0.8, 0.8, 0.8)
-        pdf.line(margin_left, start_y - 50, margin_right, start_y - 50)
-        pdf.setStrokeColorRGB(0, 0, 0)
-        return start_y - 62
-
-    def draw_line_separator(current_y, width_line=0.5):
-        pdf.setLineWidth(width_line)
         pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
+        pdf.line(margin_left, start_y - 44, margin_right, start_y - 44)
+        pdf.setStrokeColorRGB(0, 0, 0)
+        
+        return start_y - 56
+
+    def draw_line_separator(current_y, width_line=0.5, color=(0.9, 0.9, 0.9)):
+        pdf.setLineWidth(width_line)
+        pdf.setStrokeColorRGB(*color)
         pdf.line(margin_left, current_y, margin_right, current_y)
         pdf.setStrokeColorRGB(0, 0, 0)
-        return current_y - 12
+        return current_y - 14
 
-    def draw_block(title, body, current_y, title_font="Helvetica-Bold", body_font="Helvetica", wrap_width=95):
-        current_y = ensure_space(current_y, min_y=100)
+    def draw_block(title, body, current_y, title_font="Helvetica-Bold", body_font="Helvetica", wrap_width=100):
+        current_y = ensure_space(current_y, min_y=120)
         
-        # Section title with subtle background
-        pdf.setFillColorRGB(0.97, 0.97, 0.97)
-        pdf.rect(margin_left - 5, current_y - 4, margin_right - margin_left + 10, 18, fill=1, stroke=0)
-        pdf.setFillColorRGB(0.2, 0.2, 0.2)
+        # Professional section title
+        pdf.setFillColorRGB(0.98, 0.98, 0.98)
+        pdf.rect(margin_left - 3, current_y - 5, margin_right - margin_left + 6, 20, fill=1, stroke=0)
         
-        pdf.setFont(title_font, 11)
-        pdf.drawString(margin_left, current_y, title.upper())
+        pdf.setFillColorRGB(0.15, 0.15, 0.15)
+        pdf.setFont(title_font, 10)
+        pdf.drawString(margin_left + 2, current_y, title.upper())
         pdf.setFillColorRGB(0, 0, 0)
-        current_y -= 22
+        current_y -= 24
         
+        # Body text with proper spacing
         pdf.setFont(body_font, 9)
+        pdf.setFillColorRGB(0.2, 0.2, 0.2)
         for line in wrap_lines(body, width=wrap_width):
-            current_y = ensure_space(current_y, min_y=80)
-            pdf.drawString(margin_left + 8, current_y, line)
-            current_y -= 13
+            current_y = ensure_space(current_y, min_y=90)
+            pdf.drawString(margin_left + 6, current_y, line)
+            current_y -= 14
         
-        current_y = draw_line_separator(current_y - 2)
+        pdf.setFillColorRGB(0, 0, 0)
+        current_y = draw_line_separator(current_y - 3)
         return current_y
 
     # Draw header
     y = draw_header(y)
 
-    # Invoice title section
-    pdf.setFillColorRGB(0.05, 0.05, 0.15)
-    pdf.rect(margin_left - 5, y - 48, margin_right - margin_left + 10, 50, fill=1, stroke=0)
+    # Professional invoice title section
+    pdf.setFillColorRGB(0.08, 0.08, 0.15)
+    pdf.rect(margin_left - 3, y - 54, margin_right - margin_left + 6, 54, fill=1, stroke=0)
     
     pdf.setFillColorRGB(1, 1, 1)
-    pdf.setFont("Helvetica-Bold", 22)
-    pdf.drawString(margin_left + 5, y - 18, "INVOICE / PROPOSAL")
+    pdf.setFont("Helvetica-Bold", 24)
+    pdf.drawString(margin_left + 8, y - 20, "INVOICE / PROPOSAL")
     
-    pdf.setFont("Helvetica", 9)
-    pdf.drawString(margin_left + 5, y - 32, f"Status: {status}  |  Generated: {current_time}")
+    pdf.setFont("Helvetica", 8.5)
+    pdf.drawString(margin_left + 8, y - 36, f"Status: {status}  |  Generated: {current_time}")
     if created_at:
-        pdf.drawString(margin_left + 5, y - 44, f"Proposal Date: {created_at}")
+        pdf.drawString(margin_left + 8, y - 48, f"Proposal Date: {created_at}")
     
     pdf.setFillColorRGB(0, 0, 0)
-    y -= 60
+    y -= 66
     
-    y = draw_line_separator(y, 1.5)
+    y = draw_line_separator(y, 1, (0.8, 0.8, 0.8))
 
-    # Bill to section - in a box
-    pdf.setFillColorRGB(0.98, 0.98, 0.98)
-    pdf.rect(margin_left - 5, y - 44, (margin_right - margin_left) / 2, 44, fill=1, stroke=1)
-    pdf.setFillColorRGB(0, 0, 0)
+    # Bill to & Project in side-by-side boxes
+    box_y = y
     
-    pdf.setFont("Helvetica-Bold", 10)
-    pdf.drawString(margin_left, y - 12, "BILL TO")
+    # Bill To box
+    pdf.setFillColorRGB(0.99, 0.99, 0.99)
+    pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
+    pdf.rect(margin_left - 3, box_y - 50, (margin_right - margin_left) / 2 - 5, 50, fill=1, stroke=1)
+    pdf.setStrokeColorRGB(0, 0, 0)
+    
+    pdf.setFillColorRGB(0.2, 0.2, 0.2)
+    pdf.setFont("Helvetica-Bold", 9)
+    pdf.drawString(margin_left + 3, box_y - 14, "BILL TO")
     pdf.setFont("Helvetica", 10)
-    pdf.drawString(margin_left, y - 26, client_name)
-    y -= 52
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.drawString(margin_left + 3, box_y - 30, client_name)
     
-    # Project info - in a box
+    # Project box
+    project_x = margin_left + (margin_right - margin_left) / 2 + 5
     pdf.setFillColorRGB(0.97, 0.99, 1)
-    pdf.rect(margin_left - 5, y - 44, margin_right - margin_left + 10, 44, fill=1, stroke=1)
+    pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
+    pdf.rect(project_x - 3, box_y - 50, (margin_right - margin_left) / 2 - 5, 50, fill=1, stroke=1)
+    pdf.setStrokeColorRGB(0, 0, 0)
+    
+    pdf.setFillColorRGB(0.2, 0.2, 0.2)
+    pdf.setFont("Helvetica-Bold", 9)
+    pdf.drawString(project_x + 3, box_y - 14, "PROJECT")
+    pdf.setFont("Helvetica-Bold", 11)
     pdf.setFillColorRGB(0, 0, 0)
     
-    pdf.setFont("Helvetica-Bold", 10)
-    pdf.drawString(margin_left, y - 12, "PROJECT")
-    pdf.setFont("Helvetica-Bold", 12)
-    pdf.drawString(margin_left, y - 28, project_name)
-    y -= 52
+    # Wrap project name if too long
+    max_proj_width = (margin_right - project_x) - 12
+    proj_words = project_name.split()
+    proj_lines = []
+    current_line = ""
+    for word in proj_words:
+        test_line = current_line + " " + word if current_line else word
+        if pdf.stringWidth(test_line, "Helvetica-Bold", 11) < max_proj_width:
+            current_line = test_line
+        else:
+            if current_line:
+                proj_lines.append(current_line)
+            current_line = word
+    if current_line:
+        proj_lines.append(current_line)
     
-    y = draw_line_separator(y, 1.5)
+    proj_y = box_y - 30
+    for proj_line in proj_lines[:2]:  # Max 2 lines
+        pdf.drawString(project_x + 3, proj_y, proj_line)
+        proj_y -= 12
+    
+    y = box_y - 60
+    y = draw_line_separator(y, 1, (0.8, 0.8, 0.8))
 
     # Sections with full details
     sections = [
@@ -620,43 +673,54 @@ def invoice_pdf(token):
     for title, body in sections:
         y = draw_block(title, body, y)
 
-    # Investment amount - clean highlighted box
-    y = ensure_space(y, min_y=130)
+    # Investment amount - elegant highlight box
+    y = ensure_space(y, min_y=140)
     
-    # Simple box for investment
-    box_height = 60
-    pdf.setFillColorRGB(0.97, 0.97, 0.97)
-    pdf.rect(margin_left - 5, y - box_height + 10, margin_right - margin_left + 10, box_height, fill=1, stroke=1)
-    pdf.setFillColorRGB(0, 0, 0)
-    
-    pdf.setFont("Helvetica-Bold", 11)
-    pdf.drawString(margin_left + 5, y - 10, "INVESTMENT AMOUNT")
-    pdf.setFont("Helvetica-Bold", 24)
-    pdf.setFillColorRGB(0.1, 0.1, 0.1)
-    pdf.drawString(margin_left + 5, y - 38, rupiah(amount))
-    pdf.setFillColorRGB(0, 0, 0)
-    
-    y -= box_height + 25
-
-    # Footer section with better structure
-    y = ensure_space(y, min_y=110)
-    y = draw_line_separator(y, 1.5)
-    
-    pdf.setFillColorRGB(0.97, 0.97, 0.97)
-    pdf.rect(margin_left - 5, y - 84, margin_right - margin_left + 10, 82, fill=1, stroke=0)
+    box_height = 64
+    pdf.setFillColorRGB(0.98, 0.98, 0.98)
+    pdf.setStrokeColorRGB(0.75, 0.75, 0.75)
+    pdf.setLineWidth(1)
+    pdf.rect(margin_left - 3, y - box_height + 10, margin_right - margin_left + 6, box_height, fill=1, stroke=1)
+    pdf.setStrokeColorRGB(0, 0, 0)
     pdf.setFillColorRGB(0, 0, 0)
     
     pdf.setFont("Helvetica-Bold", 10)
-    pdf.drawString(margin_left, y - 12, "Prime Projectx")
-    pdf.setFont("Helvetica", 8)
-    pdf.drawString(margin_left, y - 24, "Engineering & System Development Solutions")
-    pdf.drawString(margin_left, y - 38, f"Contact: {CONTACT_EMAIL} | {CONTACT_WHATSAPP}")
-    pdf.drawString(margin_left, y - 50, "LinkedIn: linkedin.com/in/galihprime")
-    pdf.drawString(margin_left, y - 62, "Fastwork: fastwork.id/user/glh_prima (Kolaborasi via Fastwork)")
+    pdf.setFillColorRGB(0.3, 0.3, 0.3)
+    pdf.drawString(margin_left + 8, y - 14, "INVESTMENT AMOUNT")
+    
+    pdf.setFont("Helvetica-Bold", 26)
+    pdf.setFillColorRGB(0.1, 0.1, 0.1)
+    pdf.drawString(margin_left + 8, y - 44, rupiah(amount))
+    pdf.setFillColorRGB(0, 0, 0)
+    
+    y -= box_height + 30
+
+    # Professional footer
+    y = ensure_space(y, min_y=120)
+    y = draw_line_separator(y, 1, (0.8, 0.8, 0.8))
+    
+    pdf.setFillColorRGB(0.98, 0.98, 0.98)
+    pdf.rect(margin_left - 3, y - 90, margin_right - margin_left + 6, 90, fill=1, stroke=0)
+    pdf.setFillColorRGB(0, 0, 0)
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(margin_left + 8, y - 16, "Prime Projectx")
     
     pdf.setFont("Helvetica-Oblique", 8)
-    pdf.drawString(margin_left, y - 78, "Thank you for your trust in our services.")
+    pdf.setFillColorRGB(0.4, 0.4, 0.4)
+    pdf.drawString(margin_left + 8, y - 28, "Engineering & System Development Solutions")
+    
+    pdf.setFont("Helvetica", 8)
+    pdf.drawString(margin_left + 8, y - 44, f"Email: {CONTACT_EMAIL}  |  WhatsApp: {CONTACT_WHATSAPP}")
+    pdf.drawString(margin_left + 8, y - 56, "LinkedIn: linkedin.com/in/galihprime")
+    pdf.drawString(margin_left + 8, y - 68, "Fastwork Collaboration: fastwork.id/user/glh_prima")
+    
+    pdf.setFont("Helvetica-Oblique", 7.5)
+    pdf.setFillColorRGB(0.5, 0.5, 0.5)
+    pdf.drawString(margin_left + 8, y - 84, "Thank you for your trust in our services.")
+    pdf.setFillColorRGB(0, 0, 0)
 
+    draw_page_number()
     pdf.showPage()
     pdf.save()
 

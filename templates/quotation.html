@@ -80,15 +80,17 @@
 
     <aside class="proposal-side">
         {% if session.get('admin_auth') or is_full_access %}
-        <div class="proposal-section investment">
-            <h3>{{ t('quote_label_amount') }}</h3>
-            <div class="amount">Rp {{ '{:,.0f}'.format(quote.amount) }}</div>
-        </div>
+        <div class="side-card">
+            <div class="proposal-section investment" style="margin: 0 0 12px;">
+                <h3 style="margin-bottom: 6px;">{{ t('quote_label_amount') }}</h3>
+                <div class="amount">Rp {{ '{:,.0f}'.format(quote.amount) }}</div>
+            </div>
 
-        <div class="qr-card">
-            <img src="{{ url_for('qr_image', token=quote.token) }}" alt="QR for quotation">
-            <p>{{ t('quote_qr_title') }}</p>
-            <a class="btn ghost" href="{{ quote.url }}" target="_blank">Open link</a>
+            <div class="qr-card">
+                <img src="{{ url_for('qr_image', token=quote.token) }}" alt="QR for quotation">
+                <p>{{ t('quote_qr_title') }}</p>
+                <a class="btn ghost" href="{{ quote.url }}" target="_blank">Open link</a>
+            </div>
         </div>
         {% endif %}
 

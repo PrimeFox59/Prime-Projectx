@@ -70,36 +70,36 @@
         </div>
         {% endif %}
 
-        <!-- Investment Amount -->
-        {% if session.get('admin_auth') or is_full_access %}
-        <div class="proposal-section investment">
-            <h3>{{ t('quote_label_amount') }}</h3>
-            <div class="amount">Rp {{ '{:,.0f}'.format(quote.amount) }}</div>
-        </div>
-        {% endif %}
-
         <div class="actions">
             {% if session.get('admin_auth') %}
             <button class="btn ghost" id="copy-link" data-link="{{ quote.url }}">{{ t('quote_copy_link') }}</button>
             {% endif %}
             <a class="btn primary" href="/">Back to landing</a>
         </div>
-    <div class="qr-wrap">
-        {% if session.get('admin_auth') %}
+    </div>
+
+    <aside class="proposal-side">
+        {% if session.get('admin_auth') or is_full_access %}
+        <div class="proposal-section investment">
+            <h3>{{ t('quote_label_amount') }}</h3>
+            <div class="amount">Rp {{ '{:,.0f}'.format(quote.amount) }}</div>
+        </div>
+
         <div class="qr-card">
             <img src="{{ url_for('qr_image', token=quote.token) }}" alt="QR for quotation">
             <p>{{ t('quote_qr_title') }}</p>
             <a class="btn ghost" href="{{ quote.url }}" target="_blank">Open link</a>
         </div>
-        <div class="proposal-meta" style="margin-top: 0;">
-            <h4 style="margin-top: 0;">Contact</h4>
-            <p style="font-size: 14px; line-height: 1.8;">
-                <a href="https://wa.me/6289524257778" target="_blank" style="color: var(--accent); text-decoration: none; display: block;">📱 +62 895-2425-7778</a>
-                <a href="mailto:primetroyxs@gmail.com" style="color: var(--accent); text-decoration: none; display: block;">✉️ primetroyxs@gmail.com</a>
-                <a href="https://www.linkedin.com/in/galihprime/" target="_blank" style="color: var(--accent); text-decoration: none; display: block;">🔗 LinkedIn</a>
-            </p>
-        </div>
         {% endif %}
-    </div>
+
+        <div class="proposal-meta contact-card">
+            <h4>Contact</h4>
+            <div class="contact-links">
+                <a href="https://wa.me/6289524257778" target="_blank">📱 +62 895-2425-7778</a>
+                <a href="mailto:primetroyxs@gmail.com">✉️ primetroyxs@gmail.com</a>
+                <a href="https://www.linkedin.com/in/galihprime/" target="_blank">🔗 LinkedIn</a>
+            </div>
+        </div>
+    </aside>
 </section>
 {% endblock %}

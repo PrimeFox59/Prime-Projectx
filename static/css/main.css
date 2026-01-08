@@ -817,6 +817,7 @@ body::after {
 .quote-body { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
 .quote-body p { color: var(--text); }
 .amount { font-size: 32px; font-weight: 700; margin-top: 12px; color: var(--accent); text-shadow: 0 0 20px rgba(0,240,255,0.5); }
+.proposal-side { display: grid; gap: 16px; position: sticky; top: 110px; }
 .qr-wrap { display: grid; gap: 20px; }
 .qr-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; text-align: center; box-shadow: var(--glow); }
 .qr-card img { width: 200px; height: 200px; border-radius: 12px; background: #fff; padding: 8px; }
@@ -872,6 +873,16 @@ body::after {
   font-size: 12px;
   word-break: break-all;
 }
+.contact-card .contact-links { display: grid; gap: 10px; }
+.contact-card a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.contact-card a:hover { color: var(--accent); }
 .status-badge {
   display: inline-block;
   padding: 4px 12px;

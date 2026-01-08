@@ -1,0 +1,38 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+
+<div class="card">
+    <div class="section-header">
+        <h2>{{ 'Edit' if highlight else 'Create' }} Highlight</h2>
+    </div>
+    
+    <form action="{{ url_for('admin_edit_highlight', highlight_id=highlight.id) if highlight else url_for('admin_new_highlight') }}" method="post">
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Category</label>
+                <input name="category" value="{{ highlight.category if highlight else '' }}" placeholder="Automation" required>
+            </div>
+            <div class="form-group">
+                <label>Title</label>
+                <input name="title" value="{{ highlight.title if highlight else '' }}" placeholder="Industrial & PLC" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Description</label>
+            <textarea name="body" rows="4" required>{{ highlight.body if highlight else '' }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Display Order</label>
+            <input name="display_order" type="number" value="{{ highlight.display_order if highlight else 0 }}" min="0">
+        </div>
+        
+        <div class="form-actions">
+            <button class="btn btn-success" type="submit">Save</button>
+            <a class="btn btn-secondary" href="{{ url_for('admin_dashboard') }}">Cancel</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

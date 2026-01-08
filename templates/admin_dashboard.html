@@ -1,0 +1,137 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+
+<!-- PROPOSALS SECTION -->
+<div class="card">
+    <div class="section-header">
+        <h2>Proposals & Quotations</h2>
+        <a class="btn btn-primary" href="{{ url_for('admin_new_quote') }}">+ New Proposal</a>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Client</th>
+                <th>Project</th>
+                <th>Status</th>
+                <th>Amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for q in quotes %}
+            <tr>
+                <td>{{ q.client_name }}</td>
+                <td>{{ q.project_name }}</td>
+                <td>
+                    {% if q.status == 'Approved' %}
+                    <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; background: #d4edda; color: #155724;">{{ q.status }}</span>
+                    {% elif q.status == 'Draft' %}
+                    <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; background: #f8f9fa; color: #6c757d;">{{ q.status }}</span>
+                    {% else %}
+                    <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; background: #d1ecf1; color: #0c5460;">{{ q.status }}</span>
+                    {% endif %}
+                </td>
+                <td>Rp {{ '{:,.0f}'.format(q.amount) }}</td>
+                <td>
+                    <div class="actions">
+                        <a class="btn btn-primary" href="{{ url_for('admin_edit_quote', quote_id=q.id) }}">Edit</a>
+                        <a class="btn btn-secondary" href="{{ url_for('view_quote', token=q.token) }}" target="_blank">View</a>
+                        <form action="{{ url_for('admin_delete_quote', quote_id=q.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete proposal?');">
+                            <button class="btn btn-danger" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #6c757d; padding: 2rem;">
+                    Belum ada proposal. Klik "New Proposal" untuk membuat yang pertama!
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- INQUIRIES SECTION -->
+<div class="card">
+    <div class="section-header">
+        <h2>Client Inquiries</h2>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Client</th>
+                <th>Project</th>
+                <th>Contact</th>
+                <th>Budget</th>
+                <th>Received</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in inquiries %}
+            <tr>
+                <td>{{ i.client_name }}</td>
+                <td>{{ i.project_name }}</td>
+                <td>{{ i.contact }}</td>
+                <td>{% if i.budget %}Rp {{ '{:,.0f}'.format(i.budget) }}{% else %}-{% endif %}</td>
+                <td>{{ i.created_at.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #6c757d; padding: 2rem;">
+                    Belum ada inquiry dari client.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- LANDING HIGHLIGHTS SECTION -->
+<div class="card">
+    <div class="section-header">
+        <h2>Landing Page Highlights</h2>
+        <a class="btn btn-primary" href="{{ url_for('admin_new_highlight') }}">+ New Highlight</a>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Order</th>
+                <th>Category</th>
+                <th>Title</th>
+                <th>Updated</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in highlights %}
+            <tr>
+                <td>{{ item.display_order }}</td>
+                <td>{{ item.category }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <div class="actions">
+                        <a class="btn btn-primary" href="{{ url_for('admin_edit_highlight', highlight_id=item.id) }}">Edit</a>
+                        <form action="{{ url_for('admin_delete_highlight', highlight_id=item.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Hapus highlight?');">
+                            <button class="btn btn-danger" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #6c757d; padding: 2rem;">
+                    Belum ada highlight. Klik "New Highlight" untuk menambahkan!
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

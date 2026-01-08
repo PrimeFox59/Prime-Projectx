@@ -1,0 +1,100 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+
+<div class="card">
+    <div class="section-header">
+        <h2>{{ 'Edit' if quote else 'Create' }} Proposal</h2>
+    </div>
+    
+    <form action="{{ url_for('admin_edit_quote', quote_id=quote.id) if quote else url_for('admin_new_quote') }}" method="post">
+        <div class="form-section">
+            <h3>Informasi Dasar</h3>
+            
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Client / Company</label>
+                    <input name="client_name" value="{{ quote.client_name if quote else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Nama Proyek</label>
+                    <input name="project_name" value="{{ quote.project_name if quote else '' }}" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Scope of Work</label>
+                <textarea name="scope" rows="3" placeholder="Deskripsi umum scope proyek" required>{{ quote.scope if quote else '' }}</textarea>
+            </div>
+            
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Investment Amount (Rp)</label>
+                    <input name="amount" type="number" step="0.01" value="{{ quote.amount if quote else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        {% set statuses = ['Draft','Proposal','Approved','In Progress','Completed'] %}
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if quote and quote.status==s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Rencana Teknis</h3>
+            
+            <div class="form-group">
+                <label>Technical Approach</label>
+                <textarea name="technical_approach" rows="4" placeholder="Metodologi & pendekatan teknis yang akan digunakan, arsitektur sistem, dll.">{{ quote.technical_approach if quote else '' }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Technology Stack</label>
+                <textarea name="tech_stack" rows="3" placeholder="Teknologi: Frontend (React), Backend (Flask/Python), Database (PostgreSQL), dll.">{{ quote.tech_stack if quote else '' }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Deliverables</label>
+                <textarea name="deliverables" rows="4" placeholder="List deliverables:\n- Web application dengan dashboard admin\n- Mobile-responsive design\n- API documentation\n- User manual & training">{{ quote.deliverables if quote else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Timeline & Resources</h3>
+            
+            <div class="form-group">
+                <label>Project Timeline</label>
+                <textarea name="timeline" rows="4" placeholder="Week 1-2: Requirements & Design\nWeek 3-6: Development Sprint\nWeek 7: Testing & UAT\nWeek 8: Deployment & Training">{{ quote.timeline if quote else '' }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Team Structure</label>
+                <textarea name="team_structure" rows="3" placeholder="1x Project Manager\n2x Full-stack Developer\n1x UI/UX Designer\n1x QA Engineer">{{ quote.team_structure if quote else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Terms & Conditions</h3>
+            
+            <div class="form-group">
+                <label>Assumptions & Dependencies</label>
+                <textarea name="assumptions" rows="3" placeholder="- Client menyediakan akses ke sistem existing\n- Server & infrastructure disediakan oleh client\n- UAT dilakukan dalam 2 minggu">{{ quote.assumptions if quote else '' }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Payment Terms</label>
+                <textarea name="payment_terms" rows="3" placeholder="30% - Down payment\n40% - After development completion\n30% - After UAT & Go-live">{{ quote.payment_terms if quote else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-success" type="submit">Save Proposal</button>
+            <a class="btn btn-secondary" href="{{ url_for('admin_dashboard') }}">Cancel</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

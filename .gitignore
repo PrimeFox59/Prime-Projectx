@@ -1,0 +1,36 @@
+# Firebase credentials (NEVER commit this file!)
+firebase-credentials.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+
+# SQLite backup (old database)
+*.db
+*.sqlite
+*.sqlite.bak
+app.py.sqlite.bak
+
+# Vercel
+.vercel

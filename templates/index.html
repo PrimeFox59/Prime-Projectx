@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero">
+    <div class="hero-text">
+        <p class="eyebrow">{{ t('hero_eyebrow') }}</p>
+        <h1>{{ t('hero_title') }}</h1>
+        <p class="lede">{{ t('hero_desc') }}</p>
+        <div class="hero-actions">
+            <a class="btn primary" href="#new-quote">{{ t('hero_btn_primary') }}</a>
+            <a class="btn ghost" href="#quotes">{{ t('hero_btn_secondary') }}</a>
+        </div>
+        <div class="metrics">
+            <div><span>50+</span> {{ t('hero_metric_1') }}</div>
+            <div><span>18+</span> {{ t('hero_metric_2') }}</div>
+            <div><span>24/7</span> {{ t('hero_metric_3') }}</div>
+        </div>
+    </div>
+</section>
+
+<section id="services" class="panel">
+    <div class="panel-head">
+        <h2>{{ t('capabilities_title') }}</h2>
+        <p>{{ t('capabilities_desc') }}</p>
+    </div>
+    <div class="cards">
+        {% for item in highlights %}
+        <div class="card">
+            <div class="chip">{{ item.category }}</div>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.body }}</p>
+        </div>
+        {% else %}
+        <p class="empty">Belum ada highlight. Tambahkan dari halaman admin.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section id="flow" class="panel split">
+    <div>
+        <h2>{{ t('workflow_title') }}</h2>
+        <ol class="steps">
+            <li><span>01</span><div><strong>{{ t('workflow_step_1') }}</strong><p>{{ t('workflow_step_1_desc') }}</p></div></li>
+            <li><span>02</span><div><strong>{{ t('workflow_step_2') }}</strong><p>{{ t('workflow_step_2_desc') }}</p></div></li>
+            <li><span>03</span><div><strong>{{ t('workflow_step_3') }}</strong><p>{{ t('workflow_step_3_desc') }}</p></div></li>
+            <li><span>04</span><div><strong>{{ t('workflow_step_4') }}</strong><p>{{ t('workflow_step_4_desc') }}</p></div></li>
+            <li><span>05</span><div><strong>{{ t('workflow_step_5') }}</strong><p>{{ t('workflow_step_5_desc') }}</p></div></li>
+        </ol>
+    </div>
+    <div class="glow-box">
+        <p class="eyebrow">{{ t('workflow_box_title') }}</p>
+        <h3>{{ t('workflow_box_subtitle') }}</h3>
+        <ul class="bullets">
+            <li>{{ t('workflow_box_bullet_1') }}</li>
+            <li>{{ t('workflow_box_bullet_2') }}</li>
+            <li>{{ t('workflow_box_bullet_3') }}</li>
+            <li>{{ t('workflow_box_bullet_4') }}</li>
+        </ul>
+        <a class="btn primary" href="#new-quote">{{ t('workflow_box_btn') }}</a>
+    </div>
+</section>
+
+<section id="new-quote" class="panel form-panel">
+    <div>
+        <p class="eyebrow">Engage</p>
+        <h2>{{ t('inquiry_title') }}</h2>
+        <p>{{ t('inquiry_desc') }}</p>
+        <form action="{{ url_for('create_inquiry') }}" method="post" class="quote-form">
+            <label>{{ t('inquiry_client') }}<input name="client_name" placeholder="ex: Nova Manufacturing" required></label>
+            <label>{{ t('inquiry_project') }}<input name="project_name" placeholder="ex: Factory IoT Rollout" required></label>
+            <label>{{ t('inquiry_scope') }}<textarea name="scope" rows="3" placeholder="{{ t('inquiry_scope_placeholder') }}" required></textarea></label>
+            <div class="row">
+                <label>{{ t('inquiry_budget') }}<input name="budget" placeholder="1500000"></label>
+                <label>{{ t('inquiry_contact') }}<input name="contact" placeholder="you@company.com / +62" required></label>
+            </div>
+            <button class="btn primary" type="submit">{{ t('inquiry_submit') }}</button>
+        </form>
+    </div>
+    <div class="glow-box tight">
+        <h3>{{ t('inquiry_box_title') }}</h3>
+        <p>{{ t('inquiry_box_desc') }}</p>
+        <ul class="bullets">
+            <li>{{ t('inquiry_box_bullet_1') }}</li>
+            <li>{{ t('inquiry_box_bullet_2') }}</li>
+            <li>{{ t('inquiry_box_bullet_3') }}</li>
+        </ul>
+    </div>
+</section>
+
+<section id="quotes" class="panel">
+    <div class="panel-head">
+        <h2>{{ t('quotes_title') }}</h2>
+        <p>{{ t('quotes_desc') }}</p>
+    </div>
+    <div class="cards quotes">
+        {% for quote in quotes %}
+        <div class="card quote-card">
+            <div class="chip">{{ quote.status }}</div>
+            <h3>{{ quote.project_name }}</h3>
+            <p>{{ quote.scope[:120] }}{% if quote.scope|length > 120 %}...{% endif %}</p>
+            <div class="quote-meta">
+                <span>{{ quote.client_name }}</span>
+                <span>Rp {{ '{:,.0f}'.format(quote.amount) }}</span>
+            </div>
+            <a class="btn ghost" href="{{ url_for('view_quote', token=quote.token) }}">{{ t('quote_view') }}</a>
+        </div>
+        {% else %}
+        <p class="empty">Belum ada quotation, buat yang pertama.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

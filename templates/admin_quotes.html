@@ -1,0 +1,56 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+
+<div class="card">
+    <div class="section-header">
+        <h2>All Proposals</h2>
+        <a class="btn btn-primary" href="{{ url_for('admin_new_quote') }}">+ New Proposal</a>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Client</th>
+                <th>Project</th>
+                <th>Status</th>
+                <th>Amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for q in quotes %}
+            <tr>
+                <td>{{ q.client_name }}</td>
+                <td>{{ q.project_name }}</td>
+                <td>
+                    {% if q.status == 'Approved' %}
+                    <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; background: #d4edda; color: #155724;">{{ q.status }}</span>
+                    {% elif q.status == 'Draft' %}
+                    <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; background: #f8f9fa; color: #6c757d;">{{ q.status }}</span>
+                    {% else %}
+                    <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; background: #d1ecf1; color: #0c5460;">{{ q.status }}</span>
+                    {% endif %}
+                </td>
+                <td>Rp {{ '{:,.0f}'.format(q.amount) }}</td>
+                <td>
+                    <div class="actions">
+                        <a class="btn btn-primary" href="{{ url_for('admin_edit_quote', quote_id=q.id) }}">Edit</a>
+                        <a class="btn btn-secondary" href="{{ url_for('view_quote', token=q.token) }}" target="_blank">View</a>
+                        <form action="{{ url_for('admin_delete_quote', quote_id=q.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete proposal?');">
+                            <button class="btn btn-danger" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #6c757d; padding: 2rem;">
+                    Belum ada proposal.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

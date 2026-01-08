@@ -50,6 +50,7 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 CONTACT_WHATSAPP = "+6289524257778"
 CONTACT_LINKEDIN = "https://www.linkedin.com/in/galihprime/"
 CONTACT_EMAIL = "primetroyxs@gmail.com"
+CONTACT_FASTWORK = "https://fastwork.id/user/glh_prima"
 
 TRANSLATIONS = {
     "id": {
@@ -509,12 +510,13 @@ def invoice_pdf(token):
         pdf.setFont("Helvetica", 8)
         contact_x = margin_right - 180
         pdf.setFillColorRGB(0.95, 0.97, 0.98)
-        pdf.rect(contact_x - 8, start_y - 38, 188, 38, fill=1, stroke=0)
+        pdf.rect(contact_x - 8, start_y - 50, 188, 50, fill=1, stroke=0)
         pdf.setFillColorRGB(0, 0, 0)
         
         pdf.drawString(contact_x, start_y - 8, f"WhatsApp: {CONTACT_WHATSAPP}")
         pdf.drawString(contact_x, start_y - 20, f"Email: {CONTACT_EMAIL}")
         pdf.drawString(contact_x, start_y - 32, "LinkedIn: linkedin.com/in/galihprime")
+        pdf.drawString(contact_x, start_y - 44, "Fastwork: fastwork.id/user/glh_prima")
         
         # Horizontal line
         pdf.setLineWidth(1.5)
@@ -639,7 +641,7 @@ def invoice_pdf(token):
     y = draw_line_separator(y, 1.5)
     
     pdf.setFillColorRGB(0.97, 0.97, 0.97)
-    pdf.rect(margin_left - 5, y - 70, margin_right - margin_left + 10, 68, fill=1, stroke=0)
+    pdf.rect(margin_left - 5, y - 84, margin_right - margin_left + 10, 82, fill=1, stroke=0)
     pdf.setFillColorRGB(0, 0, 0)
     
     pdf.setFont("Helvetica-Bold", 10)
@@ -648,9 +650,10 @@ def invoice_pdf(token):
     pdf.drawString(margin_left, y - 24, "Engineering & System Development Solutions")
     pdf.drawString(margin_left, y - 38, f"Contact: {CONTACT_EMAIL} | {CONTACT_WHATSAPP}")
     pdf.drawString(margin_left, y - 50, "LinkedIn: linkedin.com/in/galihprime")
+    pdf.drawString(margin_left, y - 62, "Fastwork: fastwork.id/user/glh_prima (Kolaborasi via Fastwork)")
     
     pdf.setFont("Helvetica-Oblique", 8)
-    pdf.drawString(margin_left, y - 64, "Thank you for your trust in our services.")
+    pdf.drawString(margin_left, y - 78, "Thank you for your trust in our services.")
 
     pdf.showPage()
     pdf.save()

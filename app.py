@@ -494,36 +494,29 @@ def invoice_pdf(token):
         return current_y
 
     def draw_header(start_y):
-        # Company branding with border
-        pdf.setLineWidth(2)
-        pdf.setStrokeColorRGB(0, 0.55, 0.65)
-        pdf.line(margin_left, start_y + 8, margin_right, start_y + 8)
-        
+        # Company branding
         pdf.setFont("Helvetica-Bold", 24)
-        pdf.drawString(margin_left, start_y - 10, "Prime Projectx")
+        pdf.drawString(margin_left, start_y, "Prime Projectx")
         pdf.setFont("Helvetica-Oblique", 9)
         pdf.setFillColorRGB(0.3, 0.3, 0.3)
-        pdf.drawString(margin_left, start_y - 24, "Engineering & System Development Solutions")
+        pdf.drawString(margin_left, start_y - 18, "Engineering & System Development Solutions")
         pdf.setFillColorRGB(0, 0, 0)
         
-        # Contact info box on right
+        # Contact info box on right - cleaner design
         pdf.setFont("Helvetica", 8)
         contact_x = margin_right - 180
-        pdf.setFillColorRGB(0.95, 0.97, 0.98)
-        pdf.rect(contact_x - 8, start_y - 50, 188, 50, fill=1, stroke=0)
-        pdf.setFillColorRGB(0, 0, 0)
         
-        pdf.drawString(contact_x, start_y - 8, f"WhatsApp: {CONTACT_WHATSAPP}")
-        pdf.drawString(contact_x, start_y - 20, f"Email: {CONTACT_EMAIL}")
-        pdf.drawString(contact_x, start_y - 32, "LinkedIn: linkedin.com/in/galihprime")
-        pdf.drawString(contact_x, start_y - 44, "Fastwork: fastwork.id/user/glh_prima")
+        pdf.drawString(contact_x, start_y, f"WhatsApp: {CONTACT_WHATSAPP}")
+        pdf.drawString(contact_x, start_y - 12, f"Email: {CONTACT_EMAIL}")
+        pdf.drawString(contact_x, start_y - 24, "LinkedIn: linkedin.com/in/galihprime")
+        pdf.drawString(contact_x, start_y - 36, "Fastwork: fastwork.id/user/glh_prima")
         
-        # Horizontal line
-        pdf.setLineWidth(1.5)
-        pdf.setStrokeColorRGB(0, 0.55, 0.65)
-        pdf.line(margin_left, start_y - 44, margin_right, start_y - 44)
+        # Simple horizontal line
+        pdf.setLineWidth(0.5)
+        pdf.setStrokeColorRGB(0.8, 0.8, 0.8)
+        pdf.line(margin_left, start_y - 50, margin_right, start_y - 50)
         pdf.setStrokeColorRGB(0, 0, 0)
-        return start_y - 55
+        return start_y - 62
 
     def draw_line_separator(current_y, width_line=0.5):
         pdf.setLineWidth(width_line)
@@ -535,10 +528,10 @@ def invoice_pdf(token):
     def draw_block(title, body, current_y, title_font="Helvetica-Bold", body_font="Helvetica", wrap_width=95):
         current_y = ensure_space(current_y, min_y=100)
         
-        # Section title with colored background
-        pdf.setFillColorRGB(0.94, 0.96, 0.98)
+        # Section title with subtle background
+        pdf.setFillColorRGB(0.97, 0.97, 0.97)
         pdf.rect(margin_left - 5, current_y - 4, margin_right - margin_left + 10, 18, fill=1, stroke=0)
-        pdf.setFillColorRGB(0, 0.4, 0.5)
+        pdf.setFillColorRGB(0.2, 0.2, 0.2)
         
         pdf.setFont(title_font, 11)
         pdf.drawString(margin_left, current_y, title.upper())
@@ -614,23 +607,19 @@ def invoice_pdf(token):
     for title, body in sections:
         y = draw_block(title, body, y)
 
-    # Investment amount - highlighted box
+    # Investment amount - clean highlighted box
     y = ensure_space(y, min_y=130)
     
-    # Draw gradient-like box for investment
+    # Simple box for investment
     box_height = 60
-    pdf.setFillColorRGB(0.92, 0.97, 1)
-    pdf.rect(margin_left - 5, y - box_height + 10, margin_right - margin_left + 10, box_height, fill=1, stroke=0)
-    pdf.setLineWidth(2)
-    pdf.setStrokeColorRGB(0, 0.55, 0.65)
-    pdf.rect(margin_left - 5, y - box_height + 10, margin_right - margin_left + 10, box_height, fill=0, stroke=1)
-    pdf.setStrokeColorRGB(0, 0, 0)
+    pdf.setFillColorRGB(0.97, 0.97, 0.97)
+    pdf.rect(margin_left - 5, y - box_height + 10, margin_right - margin_left + 10, box_height, fill=1, stroke=1)
     pdf.setFillColorRGB(0, 0, 0)
     
     pdf.setFont("Helvetica-Bold", 11)
     pdf.drawString(margin_left + 5, y - 10, "INVESTMENT AMOUNT")
     pdf.setFont("Helvetica-Bold", 24)
-    pdf.setFillColorRGB(0, 0.4, 0.5)
+    pdf.setFillColorRGB(0.1, 0.1, 0.1)
     pdf.drawString(margin_left + 5, y - 38, rupiah(amount))
     pdf.setFillColorRGB(0, 0, 0)
     

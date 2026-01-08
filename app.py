@@ -1,6 +1,7 @@
 import os
 import secrets
 import io
+import json
 from datetime import datetime
 from functools import wraps
 
@@ -11,13 +12,28 @@ from firebase_admin import credentials, firestore
 
 # Initialize Firebase
 if not firebase_admin._apps:
-    # Check for service account file or use default credentials
-    if os.path.exists('firebase-credentials.json'):
+    # Try to get credentials from environment variable first (for Vercel)
+    cred_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    
+    if cred_json:
+        # Environment variable contains JSON string
+        try:
+            cred_dict = json.loads(cred_json)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+        except json.JSONDecodeError:
+            # If JSON parsing fails, try as file path
+            if os.path.exists(cred_json):
+                cred = credentials.Certificate(cred_json)
+                firebase_admin.initialize_app(cred)
+            else:
+                raise ValueError("Invalid GOOGLE_APPLICATION_CREDENTIALS")
+    elif os.path.exists('firebase-credentials.json'):
+        # Local development - use file
         cred = credentials.Certificate('firebase-credentials.json')
         firebase_admin.initialize_app(cred)
     else:
-        # For Vercel/production, use environment variable
-        firebase_admin.initialize_app()
+        raise ValueError("Firebase credentials not found. Set GOOGLE_APPLICATION_CREDENTIALS environment variable or add firebase-credentials.json")
 
 db = firestore.client()
 

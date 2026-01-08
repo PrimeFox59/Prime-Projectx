@@ -79,13 +79,18 @@
         {% endif %}
 
         <div class="actions">
-            {% if session.get('admin_auth') or is_full_access %}
+            {% if session.get('admin_auth') %}
             <button class="btn ghost" id="copy-link" data-link="{{ quote.url }}">{{ t('quote_copy_link') }}</button>
             {% endif %}
             <a class="btn primary" href="/">Back to landing</a>
         </div>
     <div class="qr-wrap">
-        {% if session.get('admin_auth') or is_full_access %}
+        {% if session.get('admin_auth') %}
+        <div class="qr-card">
+            <img src="{{ url_for('qr_image', token=quote.token) }}" alt="QR for quotation">
+            <p>{{ t('quote_qr_title') }}</p>
+            <a class="btn ghost" href="{{ quote.url }}" target="_blank">Open link</a>
+        </div>
         <div class="proposal-meta" style="margin-top: 0;">
             <h4 style="margin-top: 0;">Contact</h4>
             <p style="font-size: 14px; line-height: 1.8;">

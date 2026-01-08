@@ -378,6 +378,8 @@ def view_public_quote(quote_id):
         abort(404)
     
     quote = doc_to_dict(quote_doc)
+    if quote.get('token'):
+        quote['url'] = url_for("view_quote", token=quote['token'], _external=True)
     
     return render_template(
         "quotation.html",
@@ -398,6 +400,7 @@ def view_quote(token):
         abort(404)
     
     quote = doc_to_dict(quotes[0])
+    quote['url'] = url_for("view_quote", token=token, _external=True)
     
     return render_template(
         "quotation.html",

@@ -368,8 +368,28 @@ def create_inquiry():
     flash("Pengajuan berhasil dikirim. Tim kami akan menghubungi Anda.", "success")
     return redirect(url_for("home"))
 
+@app.route("/p/<quote_id>")
+def view_public_quote(quote_id):
+    # Public view accessed from portfolio list
+    quote_ref = db.collection('quotes').document(quote_id)
+    quote_doc = quote_ref.get()
+    
+    if not quote_doc.exists:
+        abort(404)
+    
+    quote = doc_to_dict(quote_doc)
+    
+    return render_template(
+        "quotation.html",
+        quote=quote,
+        is_full_access=False,
+        t=get_text,
+        lang=get_lang()
+    )
+
 @app.route("/q/<token>")
 def view_quote(token):
+    # Private view accessed via QR code / direct link
     # Find quote by token in Firestore
     quotes_ref = db.collection('quotes').where('token', '==', token).limit(1)
     quotes = list(quotes_ref.stream())
@@ -382,6 +402,7 @@ def view_quote(token):
     return render_template(
         "quotation.html",
         quote=quote,
+        is_full_access=True,
         t=get_text,
         lang=get_lang()
     )

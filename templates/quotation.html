@@ -4,10 +4,10 @@
     <div class="proposal-main">
         <p class="eyebrow">{{ t('quote_page_title') }}</p>
         <h1>{{ quote.project_name }}</h1>
-        {% if session.get('admin_auth') %}
+        {% if session.get('admin_auth') or is_full_access %}
         <p class="lede">{{ t('quote_label_client') }}: <strong>{{ quote.client_name }}</strong> | {{ t('quote_label_status') }}: <span class="status-badge {{ quote.status|lower }}">{{ quote.status }}</span> | {{ t('quote_label_created') }}: {{ quote.created_at }}</p>
         {% endif %}
-        
+
         <!-- Basic Info -->
         <div class="proposal-section">
             <h3>{{ t('quote_label_scope') }}</h3>
@@ -23,7 +23,7 @@
         {% endif %}
 
         <!-- Tech Stack -->
-        {% if quote.tech_stack and session.get('admin_auth') %}
+        {% if quote.tech_stack and (session.get('admin_auth') or is_full_access) %}
         <div class="proposal-section">
             <h3>💻 Technology Stack</h3>
             <p style="white-space: pre-line;">{{ quote.tech_stack }}</p>
@@ -47,7 +47,7 @@
         {% endif %}
 
         <!-- Team Structure -->
-        {% if quote.team_structure and session.get('admin_auth') %}
+        {% if quote.team_structure and (session.get('admin_auth') or is_full_access) %}
         <div class="proposal-section">
             <h3>👥 Team Structure</h3>
             <p style="white-space: pre-line;">{{ quote.team_structure }}</p>
@@ -55,7 +55,7 @@
         {% endif %}
 
         <!-- Assumptions -->
-        {% if quote.assumptions and session.get('admin_auth') %}
+        {% if quote.assumptions and (session.get('admin_auth') or is_full_access) %}
         <div class="proposal-section">
             <h3>📋 Assumptions & Dependencies</h3>
             <p style="white-space: pre-line;">{{ quote.assumptions }}</p>
@@ -63,7 +63,7 @@
         {% endif %}
 
         <!-- Payment Terms -->
-        {% if quote.payment_terms and session.get('admin_auth') %}
+        {% if quote.payment_terms and (session.get('admin_auth') or is_full_access) %}
         <div class="proposal-section">
             <h3>💰 Payment Terms</h3>
             <p style="white-space: pre-line;">{{ quote.payment_terms }}</p>
@@ -71,7 +71,7 @@
         {% endif %}
 
         <!-- Investment Amount -->
-        {% if session.get('admin_auth') %}
+        {% if session.get('admin_auth') or is_full_access %}
         <div class="proposal-section investment">
             <h3>{{ t('quote_label_amount') }}</h3>
             <div class="amount">Rp {{ '{:,.0f}'.format(quote.amount) }}</div>
@@ -82,31 +82,13 @@
             <button class="btn ghost" id="copy-link" data-link="{{ quote.url }}">{{ t('quote_copy_link') }}</button>
             <a class="btn primary" href="/">Back to landing</a>
         </div>
-    </div>
-    
     <div class="qr-wrap">
-        <div class="qr-card">
-            <img src="{{ url_for('qr_image', token=quote.token) }}" alt="QR for quotation">
-            <p>{{ t('quote_qr_title') }}</p>
-            <a class="btn ghost" href="{{ quote.url }}" target="_blank">Open link</a>
-        </div>
-        
-        <div class="proposal-meta">
-            <h4>Proposal ID</h4>
-            <code>{{ quote.token }}</code>
-            
-            <h4 style="margin-top: 20px;">Contact</h4>
+        <div class="proposal-meta" style="margin-top: 0;">
+            <h4 style="margin-top: 0;">Contact</h4>
             <p style="font-size: 14px; line-height: 1.8;">
                 <a href="https://wa.me/6289524257778" target="_blank" style="color: var(--accent); text-decoration: none; display: block;">📱 +62 895-2425-7778</a>
                 <a href="mailto:primetroyxs@gmail.com" style="color: var(--accent); text-decoration: none; display: block;">✉️ primetroyxs@gmail.com</a>
                 <a href="https://www.linkedin.com/in/galihprime/" target="_blank" style="color: var(--accent); text-decoration: none; display: block;">🔗 LinkedIn</a>
-            </p>
-            
-            <h4 style="margin-top: 20px;">Share Options</h4>
-            <p style="font-size: 14px; color: var(--muted);">
-                • Copy link dan share via email/WhatsApp<br>
-                • Download QR code untuk presentasi<br>
-                • Client bisa akses 24/7 dari device manapun
             </p>
         </div>
     </div>

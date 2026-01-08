@@ -9,6 +9,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 import qrcode
 import firebase_admin
 from firebase_admin import credentials, firestore
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
 
 # Initialize Firebase
 if not firebase_admin._apps:
@@ -113,6 +115,7 @@ TRANSLATIONS = {
         "quote_label_status": "Status",
         "quote_label_created": "Tanggal",
         "quote_copy_link": "Copy Link",
+        "quote_invoice_btn": "Generate Invoice PDF",
         "quote_qr_title": "Scan untuk membuka proposal",
         "admin_dashboard_title": "Admin Dashboard",
         "admin_highlights_title": "Service Highlights",
@@ -187,6 +190,7 @@ TRANSLATIONS = {
         "quote_label_status": "Status",
         "quote_label_created": "Date",
         "quote_copy_link": "Copy Link",
+        "quote_invoice_btn": "Generate Invoice PDF",
         "quote_qr_title": "Scan to open proposal",
         "admin_dashboard_title": "Admin Dashboard",
         "admin_highlights_title": "Service Highlights",
@@ -261,6 +265,7 @@ TRANSLATIONS = {
         "quote_label_status": "ステータス",
         "quote_label_created": "日付",
         "quote_copy_link": "リンクをコピー",
+        "quote_invoice_btn": "請求書PDFを生成",
         "quote_qr_title": "スキャンして提案を開く",
         "admin_dashboard_title": "管理ダッシュボード",
         "admin_highlights_title": "サービスハイライト",
@@ -428,6 +433,81 @@ def qr_image(token):
     img.save(buf, format="PNG")
     buf.seek(0)
     return send_file(buf, mimetype="image/png")
+
+
+@app.route("/invoice/<token>")
+def invoice_pdf(token):
+    # Generate a simple PDF invoice for the quote token
+    quotes_ref = db.collection('quotes').where('token', '==', token).limit(1)
+    quotes = list(quotes_ref.stream())
+
+    if not quotes:
+        abort(404)
+
+    quote = doc_to_dict(quotes[0])
+    project_name = quote.get('project_name', 'proposal')
+    client_name = quote.get('client_name', 'Client')
+    amount = quote.get('amount') or 0
+    created_at = quote.get('created_at')
+    status = quote.get('status', 'PROPOSAL')
+
+    def rupiah(val):
+        try:
+            return f"Rp {val:,.0f}".replace(",", ".")
+        except Exception:
+            return "Rp -"
+
+    buf = io.BytesIO()
+    pdf = canvas.Canvas(buf, pagesize=A4)
+    width, height = A4
+    y = height - 50
+
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(50, y, "Invoice")
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(50, y - 16, f"Status: {status}")
+    pdf.drawString(50, y - 32, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+
+    y -= 70
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(50, y, "Bill To")
+    pdf.setFont("Helvetica", 11)
+    pdf.drawString(50, y - 16, client_name)
+    pdf.drawString(50, y - 32, CONTACT_EMAIL)
+    pdf.drawString(50, y - 48, CONTACT_WHATSAPP)
+
+    y -= 90
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(50, y, "Project")
+    pdf.setFont("Helvetica", 11)
+    pdf.drawString(50, y - 16, project_name)
+
+    scope = quote.get('scope', '')
+    scope_lines = (scope or '').split('\n')[:8]
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(50, y - 34, "Scope Highlights:")
+    line_y = y - 50
+    for line in scope_lines:
+        pdf.drawString(60, line_y, f"- {line[:100]}")
+        line_y -= 14
+
+    y = line_y - 20
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(50, y, "Amount")
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(50, y - 24, rupiah(amount))
+
+    if created_at:
+        pdf.setFont("Helvetica", 10)
+        pdf.drawString(50, y - 42, f"Proposal date: {created_at}")
+
+    pdf.showPage()
+    pdf.save()
+
+    buf.seek(0)
+    safe_name = "".join(c for c in project_name if c.isalnum() or c in (" ", "_", "-")) or "proposal"
+    filename = f"Invoice-{safe_name}.pdf"
+    return send_file(buf, mimetype="application/pdf", as_attachment=True, download_name=filename)
 
 # ===== ADMIN ROUTES =====
 @app.route("/admin/login", methods=["GET", "POST"])

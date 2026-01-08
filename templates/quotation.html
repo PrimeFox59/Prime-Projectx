@@ -74,6 +74,9 @@
             {% if session.get('admin_auth') %}
             <button class="btn ghost" id="copy-link" data-link="{{ quote.url }}">{{ t('quote_copy_link') }}</button>
             {% endif %}
+            {% if session.get('admin_auth') or is_full_access %}
+            <a class="btn ghost" href="{{ url_for('invoice_pdf', token=quote.token) }}">{{ t('quote_invoice_btn') }}</a>
+            {% endif %}
             <a class="btn primary" href="/">Back to landing</a>
         </div>
     </div>

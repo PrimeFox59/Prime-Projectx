@@ -12,6 +12,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from reportlab.lib.utils import ImageReader
 
 # Initialize Firebase
 if not firebase_admin._apps:
@@ -494,7 +495,21 @@ def invoice_pdf(token):
         return current_y
 
     def draw_header(start_y):
-        # Company branding
+        # Company branding with image header
+        header_path = os.path.join(os.path.dirname(__file__), 'header invoice.png')
+        if os.path.exists(header_path):
+            try:
+                img = ImageReader(header_path)
+                # Draw image with appropriate width (keeping aspect ratio)
+                img_width = margin_right - margin_left
+                img_height = 80  # Adjust height as needed
+                pdf.drawImage(img, margin_left, start_y - img_height, width=img_width, height=img_height, preserveAspectRatio=True, mask='auto')
+                return start_y - img_height - 15
+            except Exception as e:
+                # Fallback to text if image fails
+                pass
+        
+        # Fallback: text-based header if image not found
         pdf.setFont("Helvetica-Bold", 24)
         pdf.drawString(margin_left, start_y, "Prime Projectx")
         pdf.setFont("Helvetica-Oblique", 9)
@@ -502,16 +517,14 @@ def invoice_pdf(token):
         pdf.drawString(margin_left, start_y - 18, "Engineering & System Development Solutions")
         pdf.setFillColorRGB(0, 0, 0)
         
-        # Contact info box on right - cleaner design
+        # Contact info
         pdf.setFont("Helvetica", 8)
         contact_x = margin_right - 180
-        
         pdf.drawString(contact_x, start_y, f"WhatsApp: {CONTACT_WHATSAPP}")
         pdf.drawString(contact_x, start_y - 12, f"Email: {CONTACT_EMAIL}")
         pdf.drawString(contact_x, start_y - 24, "LinkedIn: linkedin.com/in/galihprime")
         pdf.drawString(contact_x, start_y - 36, "Fastwork: fastwork.id/user/glh_prima")
         
-        # Simple horizontal line
         pdf.setLineWidth(0.5)
         pdf.setStrokeColorRGB(0.8, 0.8, 0.8)
         pdf.line(margin_left, start_y - 50, margin_right, start_y - 50)

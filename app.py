@@ -473,49 +473,95 @@ def invoice_pdf(token):
     buf = io.BytesIO()
     pdf = canvas.Canvas(buf, pagesize=A4)
     width, height = A4
+    margin_left = 50
+    margin_right = width - 50
     y = height - 50
 
     def ensure_space(current_y, min_y=80):
         if current_y < min_y:
             pdf.showPage()
-            return height - 50
+            # Redraw header on new page
+            draw_header(height - 50)
+            return height - 120
         return current_y
 
+    def draw_header(start_y):
+        # Company branding
+        pdf.setFont("Helvetica-Bold", 22)
+        pdf.drawString(margin_left, start_y, "Prime Projectx")
+        pdf.setFont("Helvetica", 9)
+        pdf.drawString(margin_left, start_y - 16, "Engineering & System Development Solutions")
+        
+        # Contact info on right
+        pdf.setFont("Helvetica", 8)
+        contact_x = margin_right - 200
+        pdf.drawString(contact_x, start_y, f"WhatsApp: {CONTACT_WHATSAPP}")
+        pdf.drawString(contact_x, start_y - 12, f"Email: {CONTACT_EMAIL}")
+        pdf.drawString(contact_x, start_y - 24, "LinkedIn: linkedin.com/in/galihprime")
+        
+        # Horizontal line
+        pdf.setLineWidth(1.5)
+        pdf.line(margin_left, start_y - 32, margin_right, start_y - 32)
+        return start_y - 45
+
+    def draw_line_separator(current_y, width_line=1):
+        pdf.setLineWidth(width_line)
+        pdf.setStrokeColorRGB(0.7, 0.7, 0.7)
+        pdf.line(margin_left, current_y, margin_right, current_y)
+        pdf.setStrokeColorRGB(0, 0, 0)
+        return current_y - 10
+
     def draw_block(title, body, current_y, title_font="Helvetica-Bold", body_font="Helvetica", wrap_width=90):
-        current_y = ensure_space(current_y)
-        pdf.setFont(title_font, 12)
-        pdf.drawString(50, current_y, title)
-        current_y -= 16
-        pdf.setFont(body_font, 10)
+        current_y = ensure_space(current_y, min_y=100)
+        
+        # Section title with background
+        pdf.setFillColorRGB(0.95, 0.95, 0.95)
+        pdf.rect(margin_left - 5, current_y - 2, margin_right - margin_left + 10, 16, fill=1, stroke=0)
+        pdf.setFillColorRGB(0, 0, 0)
+        
+        pdf.setFont(title_font, 11)
+        pdf.drawString(margin_left, current_y, title)
+        current_y -= 20
+        
+        pdf.setFont(body_font, 9)
         for line in wrap_lines(body, width=wrap_width):
-            current_y = ensure_space(current_y)
-            pdf.drawString(50, current_y, line)
-            current_y -= 14
-        return current_y - 6
+            current_y = ensure_space(current_y, min_y=80)
+            pdf.drawString(margin_left + 5, current_y, line)
+            current_y -= 12
+        
+        current_y = draw_line_separator(current_y - 4, 0.5)
+        return current_y
 
-    # Header
-    pdf.setFont("Helvetica-Bold", 18)
-    pdf.drawString(50, y, "Invoice")
+    # Draw header
+    y = draw_header(y)
+
+    # Invoice title and meta
+    pdf.setFont("Helvetica-Bold", 20)
+    pdf.drawString(margin_left, y, "INVOICE / PROPOSAL")
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(margin_left, y - 18, f"Status: {status}")
+    pdf.drawString(margin_left, y - 30, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+    if created_at:
+        pdf.drawString(margin_left, y - 42, f"Proposal Date: {created_at}")
+    y -= 58
+    
+    y = draw_line_separator(y, 1)
+
+    # Bill to section
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(margin_left, y, "BILL TO")
     pdf.setFont("Helvetica", 10)
-    pdf.drawString(50, y - 16, f"Status: {status}")
-    pdf.drawString(50, y - 32, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
-    y -= 60
-
-    # Bill to
+    pdf.drawString(margin_left, y - 16, client_name)
+    y -= 32
+    
+    # Project info
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(margin_left, y, "PROJECT")
     pdf.setFont("Helvetica-Bold", 12)
-    pdf.drawString(50, y, "Bill To")
-    pdf.setFont("Helvetica", 11)
-    pdf.drawString(50, y - 16, client_name)
-    pdf.drawString(50, y - 32, CONTACT_EMAIL)
-    pdf.drawString(50, y - 48, CONTACT_WHATSAPP)
-    y -= 80
-
-    # Project title
-    pdf.setFont("Helvetica-Bold", 12)
-    pdf.drawString(50, y, "Project")
-    pdf.setFont("Helvetica", 11)
-    pdf.drawString(50, y - 16, project_name)
-    y -= 40
+    pdf.drawString(margin_left, y - 16, project_name)
+    y -= 36
+    
+    y = draw_line_separator(y, 1)
 
     # Sections with full details
     sections = [
@@ -532,19 +578,38 @@ def invoice_pdf(token):
     for title, body in sections:
         y = draw_block(title, body, y)
 
-    # Amount
-    y = ensure_space(y)
+    # Investment amount - highlighted box
+    y = ensure_space(y, min_y=120)
+    
+    # Draw box for investment
+    box_height = 50
+    pdf.setFillColorRGB(0.95, 0.98, 1)
+    pdf.rect(margin_left - 5, y - box_height + 10, margin_right - margin_left + 10, box_height, fill=1, stroke=1)
+    pdf.setFillColorRGB(0, 0, 0)
+    
     pdf.setFont("Helvetica-Bold", 12)
-    pdf.drawString(50, y, "Investment")
-    pdf.setFont("Helvetica-Bold", 18)
-    pdf.drawString(50, y - 22, rupiah(amount))
-    y -= 46
+    pdf.drawString(margin_left + 5, y - 8, "INVESTMENT AMOUNT")
+    pdf.setFont("Helvetica-Bold", 22)
+    pdf.drawString(margin_left + 5, y - 32, rupiah(amount))
+    
+    y -= box_height + 20
 
-    # Dates
-    if created_at:
-        pdf.setFont("Helvetica", 10)
-        pdf.drawString(50, y, f"Proposal date: {created_at}")
-        y -= 16
+    # Footer section
+    y = ensure_space(y, min_y=100)
+    y = draw_line_separator(y, 1)
+    
+    pdf.setFont("Helvetica", 8)
+    footer_text = [
+        "Prime Projectx - Engineering & System Development Solutions",
+        f"Contact: {CONTACT_EMAIL} | {CONTACT_WHATSAPP}",
+        "LinkedIn: linkedin.com/in/galihprime",
+        "",
+        "Thank you for your trust in our services."
+    ]
+    
+    for line in footer_text:
+        pdf.drawString(margin_left, y, line)
+        y -= 12
 
     pdf.showPage()
     pdf.save()

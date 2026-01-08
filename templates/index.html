@@ -99,7 +99,9 @@
             <p>{{ quote.scope[:120] }}{% if quote.scope|length > 120 %}...{% endif %}</p>
             <div class="quote-meta">
                 <span>{{ quote.client_name }}</span>
+                {% if session.get('admin_auth') %}
                 <span>Rp {{ '{:,.0f}'.format(quote.amount) }}</span>
+                {% endif %}
             </div>
             <a class="btn ghost" href="{{ url_for('view_public_quote', quote_id=quote.id) }}">{{ t('quote_view') }}</a>
         </div>

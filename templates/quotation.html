@@ -4,7 +4,9 @@
     <div class="proposal-main">
         <p class="eyebrow">{{ t('quote_page_title') }}</p>
         <h1>{{ quote.project_name }}</h1>
+        {% if session.get('admin_auth') %}
         <p class="lede">{{ t('quote_label_client') }}: <strong>{{ quote.client_name }}</strong> | {{ t('quote_label_status') }}: <span class="status-badge {{ quote.status|lower }}">{{ quote.status }}</span> | {{ t('quote_label_created') }}: {{ quote.created_at }}</p>
+        {% endif %}
         
         <!-- Basic Info -->
         <div class="proposal-section">
@@ -21,7 +23,7 @@
         {% endif %}
 
         <!-- Tech Stack -->
-        {% if quote.tech_stack %}
+        {% if quote.tech_stack and session.get('admin_auth') %}
         <div class="proposal-section">
             <h3>💻 Technology Stack</h3>
             <p style="white-space: pre-line;">{{ quote.tech_stack }}</p>
@@ -45,7 +47,7 @@
         {% endif %}
 
         <!-- Team Structure -->
-        {% if quote.team_structure %}
+        {% if quote.team_structure and session.get('admin_auth') %}
         <div class="proposal-section">
             <h3>👥 Team Structure</h3>
             <p style="white-space: pre-line;">{{ quote.team_structure }}</p>
@@ -53,7 +55,7 @@
         {% endif %}
 
         <!-- Assumptions -->
-        {% if quote.assumptions %}
+        {% if quote.assumptions and session.get('admin_auth') %}
         <div class="proposal-section">
             <h3>📋 Assumptions & Dependencies</h3>
             <p style="white-space: pre-line;">{{ quote.assumptions }}</p>
@@ -61,7 +63,7 @@
         {% endif %}
 
         <!-- Payment Terms -->
-        {% if quote.payment_terms %}
+        {% if quote.payment_terms and session.get('admin_auth') %}
         <div class="proposal-section">
             <h3>💰 Payment Terms</h3>
             <p style="white-space: pre-line;">{{ quote.payment_terms }}</p>
@@ -69,10 +71,12 @@
         {% endif %}
 
         <!-- Investment Amount -->
+        {% if session.get('admin_auth') %}
         <div class="proposal-section investment">
             <h3>{{ t('quote_label_amount') }}</h3>
             <div class="amount">Rp {{ '{:,.0f}'.format(quote.amount) }}</div>
         </div>
+        {% endif %}
 
         <div class="actions">
             <button class="btn ghost" id="copy-link" data-link="{{ quote.url }}">{{ t('quote_copy_link') }}</button>

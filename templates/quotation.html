@@ -79,10 +79,13 @@
         {% endif %}
 
         <div class="actions">
+            {% if session.get('admin_auth') or is_full_access %}
             <button class="btn ghost" id="copy-link" data-link="{{ quote.url }}">{{ t('quote_copy_link') }}</button>
+            {% endif %}
             <a class="btn primary" href="/">Back to landing</a>
         </div>
     <div class="qr-wrap">
+        {% if session.get('admin_auth') or is_full_access %}
         <div class="proposal-meta" style="margin-top: 0;">
             <h4 style="margin-top: 0;">Contact</h4>
             <p style="font-size: 14px; line-height: 1.8;">
@@ -91,6 +94,7 @@
                 <a href="https://www.linkedin.com/in/galihprime/" target="_blank" style="color: var(--accent); text-decoration: none; display: block;">🔗 LinkedIn</a>
             </p>
         </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

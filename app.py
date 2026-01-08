@@ -535,7 +535,7 @@ def invoice_pdf(token):
         pdf.setFillColorRGB(0, 0, 0)
         
         # Contact info - clean layout
-        pdf.setFont("Helvetica", 7.5)
+        pdf.setFont("Helvetica", 9)
         pdf.setFillColorRGB(0.3, 0.3, 0.3)
         contact_x = margin_right - 165
         pdf.drawString(contact_x, start_y - 2, f"WhatsApp: {CONTACT_WHATSAPP}")
@@ -595,7 +595,7 @@ def invoice_pdf(token):
     pdf.setFont("Helvetica-Bold", 24)
     pdf.drawString(margin_left + 8, y - 20, "INVOICE / PROPOSAL")
     
-    pdf.setFont("Helvetica", 8.5)
+    pdf.setFont("Helvetica", 9)
     pdf.drawString(margin_left + 8, y - 36, f"Status: {status}  |  Generated: {current_time}")
     if created_at:
         pdf.drawString(margin_left + 8, y - 48, f"Proposal Date: {created_at}")
@@ -617,7 +617,7 @@ def invoice_pdf(token):
     pdf.setFillColorRGB(0.2, 0.2, 0.2)
     pdf.setFont("Helvetica-Bold", 9)
     pdf.drawString(margin_left + 3, box_y - 14, "BILL TO")
-    pdf.setFont("Helvetica", 10)
+    pdf.setFont("Helvetica", 9)
     pdf.setFillColorRGB(0, 0, 0)
     pdf.drawString(margin_left + 3, box_y - 30, client_name)
     
@@ -631,7 +631,7 @@ def invoice_pdf(token):
     pdf.setFillColorRGB(0.2, 0.2, 0.2)
     pdf.setFont("Helvetica-Bold", 9)
     pdf.drawString(project_x + 3, box_y - 14, "PROJECT")
-    pdf.setFont("Helvetica-Bold", 11)
+    pdf.setFont("Helvetica-Bold", 9)
     pdf.setFillColorRGB(0, 0, 0)
     
     # Wrap project name if too long
@@ -641,7 +641,7 @@ def invoice_pdf(token):
     current_line = ""
     for word in proj_words:
         test_line = current_line + " " + word if current_line else word
-        if pdf.stringWidth(test_line, "Helvetica-Bold", 11) < max_proj_width:
+        if pdf.stringWidth(test_line, "Helvetica-Bold", 9) < max_proj_width:
             current_line = test_line
         else:
             if current_line:
@@ -706,16 +706,16 @@ def invoice_pdf(token):
     pdf.setFont("Helvetica-Bold", 11)
     pdf.drawString(margin_left + 8, y - 16, "Prime Projectx")
     
-    pdf.setFont("Helvetica-Oblique", 8)
+    pdf.setFont("Helvetica-Oblique", 9)
     pdf.setFillColorRGB(0.4, 0.4, 0.4)
     pdf.drawString(margin_left + 8, y - 28, "Engineering & System Development Solutions")
     
-    pdf.setFont("Helvetica", 8)
+    pdf.setFont("Helvetica", 9)
     pdf.drawString(margin_left + 8, y - 44, f"Email: {CONTACT_EMAIL}  |  WhatsApp: {CONTACT_WHATSAPP}")
     pdf.drawString(margin_left + 8, y - 56, "LinkedIn: linkedin.com/in/galihprime")
     pdf.drawString(margin_left + 8, y - 68, "Fastwork Collaboration: fastwork.id/user/glh_prima")
     
-    pdf.setFont("Helvetica-Oblique", 7.5)
+    pdf.setFont("Helvetica-Oblique", 9)
     pdf.setFillColorRGB(0.5, 0.5, 0.5)
     pdf.drawString(margin_left + 8, y - 84, "Thank you for your trust in our services.")
     pdf.setFillColorRGB(0, 0, 0)

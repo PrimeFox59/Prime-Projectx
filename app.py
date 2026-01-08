@@ -2,6 +2,7 @@ import os
 import secrets
 import io
 import json
+import textwrap
 from datetime import datetime
 from functools import wraps
 
@@ -457,49 +458,93 @@ def invoice_pdf(token):
         except Exception:
             return "Rp -"
 
+    def wrap_lines(text, width=90):
+        text = text or "-"
+        lines = []
+        for para in str(text).split("\n"):
+            para = para.strip()
+            if not para:
+                lines.append("")
+                continue
+            wrapped = textwrap.wrap(para, width=width) or [""]
+            lines.extend(wrapped)
+        return lines
+
     buf = io.BytesIO()
     pdf = canvas.Canvas(buf, pagesize=A4)
     width, height = A4
     y = height - 50
 
+    def ensure_space(current_y, min_y=80):
+        if current_y < min_y:
+            pdf.showPage()
+            return height - 50
+        return current_y
+
+    def draw_block(title, body, current_y, title_font="Helvetica-Bold", body_font="Helvetica", wrap_width=90):
+        current_y = ensure_space(current_y)
+        pdf.setFont(title_font, 12)
+        pdf.drawString(50, current_y, title)
+        current_y -= 16
+        pdf.setFont(body_font, 10)
+        for line in wrap_lines(body, width=wrap_width):
+            current_y = ensure_space(current_y)
+            pdf.drawString(50, current_y, line)
+            current_y -= 14
+        return current_y - 6
+
+    # Header
     pdf.setFont("Helvetica-Bold", 18)
     pdf.drawString(50, y, "Invoice")
     pdf.setFont("Helvetica", 10)
     pdf.drawString(50, y - 16, f"Status: {status}")
     pdf.drawString(50, y - 32, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+    y -= 60
 
-    y -= 70
+    # Bill to
     pdf.setFont("Helvetica-Bold", 12)
     pdf.drawString(50, y, "Bill To")
     pdf.setFont("Helvetica", 11)
     pdf.drawString(50, y - 16, client_name)
     pdf.drawString(50, y - 32, CONTACT_EMAIL)
     pdf.drawString(50, y - 48, CONTACT_WHATSAPP)
+    y -= 80
 
-    y -= 90
+    # Project title
     pdf.setFont("Helvetica-Bold", 12)
     pdf.drawString(50, y, "Project")
     pdf.setFont("Helvetica", 11)
     pdf.drawString(50, y - 16, project_name)
+    y -= 40
 
-    scope = quote.get('scope', '')
-    scope_lines = (scope or '').split('\n')[:8]
-    pdf.setFont("Helvetica", 10)
-    pdf.drawString(50, y - 34, "Scope Highlights:")
-    line_y = y - 50
-    for line in scope_lines:
-        pdf.drawString(60, line_y, f"- {line[:100]}")
-        line_y -= 14
+    # Sections with full details
+    sections = [
+        ("Scope of Work", quote.get('scope', '')),
+        ("Technical Approach", quote.get('technical_approach', '')),
+        ("Technology Stack", quote.get('tech_stack', '')),
+        ("Deliverables", quote.get('deliverables', '')),
+        ("Timeline", quote.get('timeline', '')),
+        ("Team Structure", quote.get('team_structure', '')),
+        ("Assumptions & Dependencies", quote.get('assumptions', '')),
+        ("Payment Terms", quote.get('payment_terms', '')),
+    ]
 
-    y = line_y - 20
+    for title, body in sections:
+        y = draw_block(title, body, y)
+
+    # Amount
+    y = ensure_space(y)
     pdf.setFont("Helvetica-Bold", 12)
-    pdf.drawString(50, y, "Amount")
+    pdf.drawString(50, y, "Investment")
     pdf.setFont("Helvetica-Bold", 18)
-    pdf.drawString(50, y - 24, rupiah(amount))
+    pdf.drawString(50, y - 22, rupiah(amount))
+    y -= 46
 
+    # Dates
     if created_at:
         pdf.setFont("Helvetica", 10)
-        pdf.drawString(50, y - 42, f"Proposal date: {created_at}")
+        pdf.drawString(50, y, f"Proposal date: {created_at}")
+        y -= 16
 
     pdf.showPage()
     pdf.save()

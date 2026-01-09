@@ -47,6 +47,19 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 CONTACT_WHATSAPP = "+6289524257778"
 CONTACT_LINKEDIN = "https://www.linkedin.com/in/galihprime/"
 CONTACT_EMAIL = "primetroyxs@gmail.com"
+
+
+@app.after_request
+def add_cache_headers(response):
+    """Aggressive caching for static assets to reduce repeat downloads."""
+    path = request.path.lower()
+    static_exts = (
+        ".js", ".css", ".png", ".jpg", ".jpeg", ".svg", ".gif",
+        ".mp4", ".webm", ".woff", ".woff2", ".ttf", ".eot"
+    )
+    if path.startswith("/static/") and path.endswith(static_exts):
+        response.headers.setdefault("Cache-Control", "public, max-age=2592000, immutable")
+    return response
 CONTACT_FASTWORK = "https://fastwork.id/user/glh_prima"
 
 TRANSLATIONS = {

@@ -1096,6 +1096,124 @@ body::after {
 
 .center { text-align: center; }
 
+/* PDF / Print Styles */
+@media print {
+  /* Hide unnecessary elements */
+  .nav, .admin-gear, .flash-stack, .video-overlay, .grid-bg, .actions, .qr-wrap, body::before, body::after {
+    display: none !important;
+  }
+  
+  #video-bg, #live-bg {
+    display: none !important;
+  }
+  
+  /* Reset backgrounds for clean print */
+  body {
+    background: white !important;
+    color: #000 !important;
+  }
+  
+  .panel {
+    padding: 20px !important;
+    background: white !important;
+  }
+  
+  /* Ensure consistent text sizing across all pages */
+  .proposal-main {
+    font-size: 12pt !important;
+  }
+  
+  .proposal-main h1 {
+    font-size: 24pt !important;
+    color: #000 !important;
+    background: none !important;
+    -webkit-text-fill-color: inherit !important;
+    page-break-after: avoid !important;
+    margin-bottom: 16pt !important;
+  }
+  
+  .eyebrow {
+    font-size: 9pt !important;
+    color: #666 !important;
+    margin-bottom: 8pt !important;
+  }
+  
+  .lede {
+    font-size: 11pt !important;
+    color: #333 !important;
+    margin-bottom: 16pt !important;
+  }
+  
+  .proposal-section {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    padding: 16pt !important;
+    margin: 12pt 0 !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+  }
+  
+  .proposal-section h3 {
+    font-size: 14pt !important;
+    color: #000 !important;
+    margin-bottom: 10pt !important;
+    border-bottom: 1px solid #ddd !important;
+    padding-bottom: 6pt !important;
+    page-break-after: avoid !important;
+  }
+  
+  .proposal-section p {
+    font-size: 12pt !important;
+    line-height: 1.6 !important;
+    color: #000 !important;
+    margin: 0 !important;
+  }
+  
+  .proposal-section.investment {
+    background: #f5f5f5 !important;
+    border: 2px solid #333 !important;
+    text-align: center !important;
+  }
+  
+  .proposal-section.investment h3 {
+    font-size: 14pt !important;
+  }
+  
+  .amount {
+    font-size: 20pt !important;
+    color: #000 !important;
+    font-weight: bold !important;
+    text-shadow: none !important;
+    margin-top: 8pt !important;
+  }
+  
+  .status-badge {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+    border: 1px solid #999 !important;
+    padding: 4pt 10pt !important;
+    border-radius: 4pt !important;
+    font-size: 9pt !important;
+  }
+  
+  /* Ensure white-space is preserved */
+  .proposal-section p[style*="white-space: pre-line"] {
+    white-space: pre-line !important;
+  }
+  
+  /* Page break control */
+  h1, h2, h3 {
+    page-break-after: avoid !important;
+  }
+  
+  /* Avoid orphaned content */
+  p {
+    orphans: 3 !important;
+    widows: 3 !important;
+  }
+}
+
 @media (max-width: 900px) {
   .hero, .split, .form-panel, .quote-detail { grid-template-columns: 1fr; }
   .hero { 

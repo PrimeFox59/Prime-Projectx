@@ -13,7 +13,8 @@ from firebase_admin import credentials, firestore
 # Initialize Firebase
 if not firebase_admin._apps:
     # Try to get credentials from environment variable first (for Vercel)
-    cred_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    # Use FIREBASE_CREDENTIALS instead of GOOGLE_APPLICATION_CREDENTIALS to avoid conflicts
+    cred_json = os.environ.get('FIREBASE_CREDENTIALS')
     
     if cred_json:
         # Environment variable contains JSON string
@@ -21,19 +22,14 @@ if not firebase_admin._apps:
             cred_dict = json.loads(cred_json)
             cred = credentials.Certificate(cred_dict)
             firebase_admin.initialize_app(cred)
-        except json.JSONDecodeError:
-            # If JSON parsing fails, try as file path
-            if os.path.exists(cred_json):
-                cred = credentials.Certificate(cred_json)
-                firebase_admin.initialize_app(cred)
-            else:
-                raise ValueError("Invalid GOOGLE_APPLICATION_CREDENTIALS")
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid FIREBASE_CREDENTIALS JSON: {str(e)}")
     elif os.path.exists('firebase-credentials.json'):
         # Local development - use file
         cred = credentials.Certificate('firebase-credentials.json')
         firebase_admin.initialize_app(cred)
     else:
-        raise ValueError("Firebase credentials not found. Set GOOGLE_APPLICATION_CREDENTIALS environment variable or add firebase-credentials.json")
+        raise ValueError("Firebase credentials not found. Set FIREBASE_CREDENTIALS environment variable or add firebase-credentials.json")
 
 db = firestore.client()
 

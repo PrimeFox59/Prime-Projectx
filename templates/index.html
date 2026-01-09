@@ -99,9 +99,8 @@
             <p>{{ quote.scope[:120] }}{% if quote.scope|length > 120 %}...{% endif %}</p>
             <div class="quote-meta">
                 <span>{{ quote.client_name }}</span>
-                <span>Rp {{ '{:,.0f}'.format(quote.amount) }}</span>
             </div>
-            <a class="btn ghost" href="{{ url_for('view_quote', token=quote.token) }}">{{ t('quote_view') }}</a>
+            <a class="btn ghost" href="{{ url_for('view_public_quote', quote_id=quote.id) }}">{{ t('quote_view') }}</a>
         </div>
         {% else %}
         <p class="empty">Belum ada quotation, buat yang pertama.</p>

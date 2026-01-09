@@ -2,13 +2,17 @@ import os
 import secrets
 import io
 import json
-from datetime import datetime
+import textwrap
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, abort, session
 import qrcode
 import firebase_admin
 from firebase_admin import credentials, firestore
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.utils import ImageReader
 
 # Initialize Firebase
 if not firebase_admin._apps:
@@ -43,6 +47,7 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 CONTACT_WHATSAPP = "+6289524257778"
 CONTACT_LINKEDIN = "https://www.linkedin.com/in/galihprime/"
 CONTACT_EMAIL = "primetroyxs@gmail.com"
+CONTACT_FASTWORK = "https://fastwork.id/user/glh_prima"
 
 TRANSLATIONS = {
     "id": {
@@ -109,6 +114,8 @@ TRANSLATIONS = {
         "quote_label_status": "Status",
         "quote_label_created": "Tanggal",
         "quote_copy_link": "Copy Link",
+        "quote_invoice_btn": "Generate Invoice PDF",
+        "quote_schedule_btn": "Schedule Meeting",
         "quote_qr_title": "Scan untuk membuka proposal",
         "admin_dashboard_title": "Admin Dashboard",
         "admin_highlights_title": "Service Highlights",
@@ -183,6 +190,8 @@ TRANSLATIONS = {
         "quote_label_status": "Status",
         "quote_label_created": "Date",
         "quote_copy_link": "Copy Link",
+        "quote_invoice_btn": "Generate Invoice PDF",
+        "quote_schedule_btn": "Schedule Meeting",
         "quote_qr_title": "Scan to open proposal",
         "admin_dashboard_title": "Admin Dashboard",
         "admin_highlights_title": "Service Highlights",
@@ -257,6 +266,8 @@ TRANSLATIONS = {
         "quote_label_status": "ステータス",
         "quote_label_created": "日付",
         "quote_copy_link": "リンクをコピー",
+        "quote_invoice_btn": "請求書PDFを生成",
+        "quote_schedule_btn": "ミーティング予約",
         "quote_qr_title": "スキャンして提案を開く",
         "admin_dashboard_title": "管理ダッシュボード",
         "admin_highlights_title": "サービスハイライト",
@@ -364,8 +375,30 @@ def create_inquiry():
     flash("Pengajuan berhasil dikirim. Tim kami akan menghubungi Anda.", "success")
     return redirect(url_for("home"))
 
+@app.route("/p/<quote_id>")
+def view_public_quote(quote_id):
+    # Public view accessed from portfolio list
+    quote_ref = db.collection('quotes').document(quote_id)
+    quote_doc = quote_ref.get()
+    
+    if not quote_doc.exists:
+        abort(404)
+    
+    quote = doc_to_dict(quote_doc)
+    if quote.get('token'):
+        quote['url'] = url_for("view_quote", token=quote['token'], _external=True)
+    
+    return render_template(
+        "quotation.html",
+        quote=quote,
+        is_full_access=False,
+        t=get_text,
+        lang=get_lang()
+    )
+
 @app.route("/q/<token>")
 def view_quote(token):
+    # Private view accessed via QR code / direct link
     # Find quote by token in Firestore
     quotes_ref = db.collection('quotes').where('token', '==', token).limit(1)
     quotes = list(quotes_ref.stream())
@@ -374,10 +407,12 @@ def view_quote(token):
         abort(404)
     
     quote = doc_to_dict(quotes[0])
+    quote['url'] = url_for("view_quote", token=token, _external=True)
     
     return render_template(
         "quotation.html",
         quote=quote,
+        is_full_access=True,
         t=get_text,
         lang=get_lang()
     )
@@ -400,6 +435,295 @@ def qr_image(token):
     img.save(buf, format="PNG")
     buf.seek(0)
     return send_file(buf, mimetype="image/png")
+
+
+@app.route("/invoice/<token>")
+def invoice_pdf(token):
+    # Generate a simple PDF invoice for the quote token
+    quotes_ref = db.collection('quotes').where('token', '==', token).limit(1)
+    quotes = list(quotes_ref.stream())
+
+    if not quotes:
+        abort(404)
+
+    quote = doc_to_dict(quotes[0])
+    project_name = quote.get('project_name', 'proposal')
+    client_name = quote.get('client_name', 'Client')
+    amount = quote.get('amount') or 0
+    created_at = quote.get('created_at')
+    status = quote.get('status', 'PROPOSAL')
+
+    def rupiah(val):
+        try:
+            return f"Rp {val:,.0f}".replace(",", ".")
+        except Exception:
+            return "Rp -"
+
+    def wrap_lines(text, width=90):
+        text = text or "-"
+        lines = []
+        for para in str(text).split("\n"):
+            para = para.strip()
+            if not para:
+                lines.append("")
+                continue
+            wrapped = textwrap.wrap(para, width=width) or [""]
+            lines.extend(wrapped)
+        return lines
+
+    buf = io.BytesIO()
+    pdf = canvas.Canvas(buf, pagesize=A4)
+    width, height = A4
+    margin_left = 45
+    margin_right = width - 45
+    y = height - 40
+    page_num = 1
+    
+    # GMT+7 timezone
+    gmt7 = timezone(timedelta(hours=7))
+    current_time = datetime.now(gmt7).strftime('%Y-%m-%d %H:%M WIB')
+
+    def draw_page_number():
+        pdf.setFont("Helvetica", 8)
+        pdf.setFillColorRGB(0.5, 0.5, 0.5)
+        pdf.drawRightString(margin_right, 20, f"Page {page_num}")
+        pdf.setFillColorRGB(0, 0, 0)
+
+    def ensure_space(current_y, min_y=100):
+        nonlocal page_num
+        if current_y < min_y:
+            draw_page_number()
+            pdf.showPage()
+            page_num += 1
+            # Redraw header on new page
+            new_y = draw_header(height - 40)
+            return new_y
+        return current_y
+
+    def draw_header(start_y):
+        # Company branding with image header
+        header_path = os.path.join(os.path.dirname(__file__), 'header invoice.png')
+        if os.path.exists(header_path):
+            try:
+                img = ImageReader(header_path)
+                # Draw image with full width
+                img_width = margin_right - margin_left
+                img_height = 70
+                pdf.drawImage(img, margin_left, start_y - img_height, width=img_width, height=img_height, preserveAspectRatio=True, mask='auto')
+                
+                # Thin line separator
+                pdf.setLineWidth(0.5)
+                pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
+                pdf.line(margin_left, start_y - img_height - 8, margin_right, start_y - img_height - 8)
+                pdf.setStrokeColorRGB(0, 0, 0)
+                
+                return start_y - img_height - 18
+            except Exception:
+                pass
+        
+        # Fallback: professional text-based header
+        pdf.setFont("Helvetica-Bold", 26)
+        pdf.drawString(margin_left, start_y, "Prime Projectx")
+        
+        pdf.setFont("Helvetica-Oblique", 9)
+        pdf.setFillColorRGB(0.4, 0.4, 0.4)
+        pdf.drawString(margin_left, start_y - 18, "Engineering & System Development Solutions")
+        pdf.setFillColorRGB(0, 0, 0)
+        
+        # Contact info - clean layout
+        pdf.setFont("Helvetica", 9)
+        pdf.setFillColorRGB(0.3, 0.3, 0.3)
+        contact_x = margin_right - 165
+        pdf.drawString(contact_x, start_y - 2, f"WhatsApp: {CONTACT_WHATSAPP}")
+        pdf.drawString(contact_x, start_y - 12, f"Email: {CONTACT_EMAIL}")
+        pdf.drawString(contact_x, start_y - 22, "LinkedIn: linkedin.com/in/galihprime")
+        pdf.drawString(contact_x, start_y - 32, "Fastwork: fastwork.id/user/glh_prima")
+        pdf.setFillColorRGB(0, 0, 0)
+        
+        # Elegant separator line
+        pdf.setLineWidth(0.5)
+        pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
+        pdf.line(margin_left, start_y - 44, margin_right, start_y - 44)
+        pdf.setStrokeColorRGB(0, 0, 0)
+        
+        return start_y - 56
+
+    def draw_line_separator(current_y, width_line=0.5, color=(0.9, 0.9, 0.9)):
+        pdf.setLineWidth(width_line)
+        pdf.setStrokeColorRGB(*color)
+        pdf.line(margin_left, current_y, margin_right, current_y)
+        pdf.setStrokeColorRGB(0, 0, 0)
+        return current_y - 14
+
+    def draw_block(title, body, current_y, title_font="Helvetica-Bold", body_font="Helvetica", wrap_width=100):
+        current_y = ensure_space(current_y, min_y=120)
+        
+        # Professional section title
+        pdf.setFillColorRGB(0.98, 0.98, 0.98)
+        pdf.rect(margin_left - 3, current_y - 5, margin_right - margin_left + 6, 20, fill=1, stroke=0)
+        
+        pdf.setFillColorRGB(0.15, 0.15, 0.15)
+        pdf.setFont(title_font, 10)
+        pdf.drawString(margin_left + 2, current_y, title.upper())
+        pdf.setFillColorRGB(0, 0, 0)
+        current_y -= 24
+        
+        # Body text with proper spacing
+        pdf.setFont(body_font, 9)
+        pdf.setFillColorRGB(0.2, 0.2, 0.2)
+        for line in wrap_lines(body, width=wrap_width):
+            current_y = ensure_space(current_y, min_y=90)
+            pdf.drawString(margin_left + 6, current_y, line)
+            current_y -= 14
+        
+        pdf.setFillColorRGB(0, 0, 0)
+        current_y = draw_line_separator(current_y - 3)
+        return current_y
+
+    # Draw header
+    y = draw_header(y)
+
+    # Professional invoice title section
+    pdf.setFillColorRGB(0.08, 0.08, 0.15)
+    pdf.rect(margin_left - 3, y - 54, margin_right - margin_left + 6, 54, fill=1, stroke=0)
+    
+    pdf.setFillColorRGB(1, 1, 1)
+    pdf.setFont("Helvetica-Bold", 24)
+    pdf.drawString(margin_left + 8, y - 20, "INVOICE / PROPOSAL")
+    
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(margin_left + 8, y - 36, f"Status: {status}  |  Generated: {current_time}")
+    if created_at:
+        pdf.drawString(margin_left + 8, y - 48, f"Proposal Date: {created_at}")
+    
+    pdf.setFillColorRGB(0, 0, 0)
+    y -= 66
+    
+    y = draw_line_separator(y, 1, (0.8, 0.8, 0.8))
+
+    # Bill to & Project in side-by-side boxes
+    box_y = y
+    
+    # Bill To box
+    pdf.setFillColorRGB(0.99, 0.99, 0.99)
+    pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
+    pdf.rect(margin_left - 3, box_y - 50, (margin_right - margin_left) / 2 - 5, 50, fill=1, stroke=1)
+    pdf.setStrokeColorRGB(0, 0, 0)
+    
+    pdf.setFillColorRGB(0.2, 0.2, 0.2)
+    pdf.setFont("Helvetica-Bold", 9)
+    pdf.drawString(margin_left + 3, box_y - 14, "BILL TO")
+    pdf.setFont("Helvetica", 9)
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.drawString(margin_left + 3, box_y - 30, client_name)
+    
+    # Project box
+    project_x = margin_left + (margin_right - margin_left) / 2 + 5
+    pdf.setFillColorRGB(0.97, 0.99, 1)
+    pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
+    pdf.rect(project_x - 3, box_y - 50, (margin_right - margin_left) / 2 - 5, 50, fill=1, stroke=1)
+    pdf.setStrokeColorRGB(0, 0, 0)
+    
+    pdf.setFillColorRGB(0.2, 0.2, 0.2)
+    pdf.setFont("Helvetica-Bold", 9)
+    pdf.drawString(project_x + 3, box_y - 14, "PROJECT")
+    pdf.setFont("Helvetica-Bold", 9)
+    pdf.setFillColorRGB(0, 0, 0)
+    
+    # Wrap project name if too long
+    max_proj_width = (margin_right - project_x) - 12
+    proj_words = project_name.split()
+    proj_lines = []
+    current_line = ""
+    for word in proj_words:
+        test_line = current_line + " " + word if current_line else word
+        if pdf.stringWidth(test_line, "Helvetica-Bold", 9) < max_proj_width:
+            current_line = test_line
+        else:
+            if current_line:
+                proj_lines.append(current_line)
+            current_line = word
+    if current_line:
+        proj_lines.append(current_line)
+    
+    proj_y = box_y - 30
+    for proj_line in proj_lines[:2]:  # Max 2 lines
+        pdf.drawString(project_x + 3, proj_y, proj_line)
+        proj_y -= 12
+    
+    y = box_y - 60
+    y = draw_line_separator(y, 1, (0.8, 0.8, 0.8))
+
+    # Sections with full details
+    sections = [
+        ("Scope of Work", quote.get('scope', '')),
+        ("Technical Approach", quote.get('technical_approach', '')),
+        ("Technology Stack", quote.get('tech_stack', '')),
+        ("Deliverables", quote.get('deliverables', '')),
+        ("Timeline", quote.get('timeline', '')),
+        ("Team Structure", quote.get('team_structure', '')),
+        ("Assumptions & Dependencies", quote.get('assumptions', '')),
+        ("Payment Terms", quote.get('payment_terms', '')),
+    ]
+
+    for title, body in sections:
+        y = draw_block(title, body, y)
+
+    # Investment amount - elegant highlight box
+    y = ensure_space(y, min_y=140)
+    
+    box_height = 64
+    pdf.setFillColorRGB(0.98, 0.98, 0.98)
+    pdf.setStrokeColorRGB(0.75, 0.75, 0.75)
+    pdf.setLineWidth(1)
+    pdf.rect(margin_left - 3, y - box_height + 10, margin_right - margin_left + 6, box_height, fill=1, stroke=1)
+    pdf.setStrokeColorRGB(0, 0, 0)
+    pdf.setFillColorRGB(0, 0, 0)
+    
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.setFillColorRGB(0.3, 0.3, 0.3)
+    pdf.drawString(margin_left + 8, y - 14, "INVESTMENT AMOUNT")
+    
+    pdf.setFont("Helvetica-Bold", 26)
+    pdf.setFillColorRGB(0.1, 0.1, 0.1)
+    pdf.drawString(margin_left + 8, y - 44, rupiah(amount))
+    pdf.setFillColorRGB(0, 0, 0)
+    
+    y -= box_height + 30
+
+    # Professional footer
+    y = ensure_space(y, min_y=120)
+    y = draw_line_separator(y, 1, (0.8, 0.8, 0.8))
+    
+    pdf.setFillColorRGB(0.98, 0.98, 0.98)
+    pdf.rect(margin_left - 3, y - 90, margin_right - margin_left + 6, 90, fill=1, stroke=0)
+    pdf.setFillColorRGB(0, 0, 0)
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(margin_left + 8, y - 16, "Prime Projectx")
+    
+    pdf.setFont("Helvetica-Oblique", 9)
+    pdf.setFillColorRGB(0.4, 0.4, 0.4)
+    pdf.drawString(margin_left + 8, y - 28, "Engineering & System Development Solutions")
+    
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(margin_left + 8, y - 44, f"Email: {CONTACT_EMAIL}  |  WhatsApp: {CONTACT_WHATSAPP}")
+    pdf.drawString(margin_left + 8, y - 56, "LinkedIn: linkedin.com/in/galihprime")
+    pdf.drawString(margin_left + 8, y - 68, "Fastwork Collaboration: fastwork.id/user/glh_prima")
+    
+    pdf.setFont("Helvetica-Oblique", 9)
+    pdf.setFillColorRGB(0.5, 0.5, 0.5)
+    pdf.drawString(margin_left + 8, y - 84, "Thank you for your trust in our services.")
+    pdf.setFillColorRGB(0, 0, 0)
+
+    draw_page_number()
+    pdf.showPage()
+    pdf.save()
+
+    buf.seek(0)
+    safe_name = "".join(c for c in project_name if c.isalnum() or c in (" ", "_", "-")) or "proposal"
+    filename = f"Invoice-{safe_name}.pdf"
+    return send_file(buf, mimetype="application/pdf", as_attachment=True, download_name=filename)
 
 # ===== ADMIN ROUTES =====
 @app.route("/admin/login", methods=["GET", "POST"])

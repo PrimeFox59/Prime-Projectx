@@ -37,6 +37,19 @@
                     <div class="actions">
                         <a class="btn btn-primary" href="{{ url_for('admin_edit_quote', quote_id=q.id) }}">Edit</a>
                         <a class="btn btn-secondary" href="{{ url_for('view_quote', token=q.token) }}" target="_blank">View</a>
+                        {% set quote_url = url_for('view_quote', token=q.token, _external=True) %}
+                        {% set pdf_url = url_for('invoice_pdf', token=q.token, _external=True) %}
+                        {% set qr_url = url_for('qr_image', token=q.token, _external=True) %}
+                        {% set wa_message = (
+                            "Pemberitahuan Proposal\n"
+                            ~ "Project: " ~ q.project_name ~ "\n"
+                            ~ "Client: " ~ q.client_name ~ "\n"
+                            ~ "Status: " ~ q.status ~ "\n\n"
+                            ~ "Link Proposal: " ~ quote_url ~ "\n"
+                            ~ "PDF: " ~ pdf_url ~ "\n"
+                            ~ "QR: " ~ qr_url
+                        ) | urlencode %}
+                        <a class="btn btn-secondary" href="https://wa.me/?text={{ wa_message }}" target="_blank">Send WA</a>
                         <form action="{{ url_for('admin_delete_quote', quote_id=q.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete proposal?');">
                             <button class="btn btn-danger" type="submit">Delete</button>
                         </form>

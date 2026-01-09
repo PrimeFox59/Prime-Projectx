@@ -569,10 +569,11 @@ def invoice_pdf(token):
         current_y -= 24
         
         # Body text with proper spacing
-        pdf.setFont(body_font, 9)
-        pdf.setFillColorRGB(0.2, 0.2, 0.2)
         for line in wrap_lines(body, width=wrap_width):
             current_y = ensure_space(current_y, min_y=90)
+            # After a page break, ReportLab resets font; re-apply for every line
+            pdf.setFont(body_font, 9)
+            pdf.setFillColorRGB(0.2, 0.2, 0.2)
             pdf.drawString(margin_left + 6, current_y, line)
             current_y -= 14
         

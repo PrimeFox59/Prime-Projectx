@@ -670,6 +670,17 @@ def invoice_pdf(token):
     for title, body in sections:
         y = draw_block(title, body, y)
 
+    # Payment details (bank accounts)
+    payments_body = (
+        "BCA Digital : Galih Primananda\n"
+        "Kode Bank : 501\n"
+        "Nomor Rekening : 003585856032\n"
+        "\n"
+        "BCA : Galih Primananda\n"
+        "Nomor Rekening : 3251311097"
+    )
+    y = draw_block("Payment Instructions", payments_body, y, wrap_width=80)
+
     # Investment amount - elegant highlight box
     y = ensure_space(y, min_y=140)
     
